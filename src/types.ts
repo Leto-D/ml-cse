@@ -80,6 +80,15 @@ export interface Client {
     titleAccent: string;
     subtitle: string;
     cta: string;
+    /**
+     * Second appel à l'action, discret, à côté du principal. Omis = absent.
+     * `href` est un chemin relatif au site (sans barre initiale) : le
+     * composant le préfixe par BASE_URL, sinon il casse sous /ml-cse.
+     */
+    ctaSecondary?: {
+      label: string;
+      href: string;
+    };
   };
 
   products: {

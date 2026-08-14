@@ -1,0 +1,8 @@
+# L'outil de prévisualisation de logo interroge une API tierce à quota :
+# aucune raison de le laisser explorer par des robots.
+# Attention : sur GitHub Pages, le site vit sous /ml-cse et ce fichier
+# n'est pas le robots.txt d'autorité du domaine. C'est la balise
+# <meta name="robots" content="noindex"> de la page qui fait le travail
+# là-bas ; ce fichier ne sert que sur un déploiement à la racine.
+User-agent: *
+Disallow: /lab/

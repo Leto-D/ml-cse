@@ -1,0 +1,740 @@
+---
+import { Image } from 'astro:assets';
+import { activeClient } from '~/clients';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import SiteHeader from '~/components/SiteHeader.astro';
+import SiteFooter from '~/components/SiteFooter.astro';
+import SectionHeader from '~/components/SectionHeader.astro';
+import Icon from '~/components/Icon.astro';
+import productPhoto from '~/placeholders/coeur_vache_placeholder.png';
+
+// Outil de prévisualisation : reprend la direction artistique du site
+// (BaseLayout, header, footer, tokens de global.css) mais reste hors
+// référencement — c'est une simulation, pas un rendu contractuel.
+//
+// Client ID Brandfetch lu dans .env (CLIENTBRANDFETCH ou sa variante
+// PUBLIC_), encodé en base64 et posé sur un data-attribut du formulaire.
+// L'encodage n'est PAS une protection : il évite seulement que la chaîne
+// soit récoltable telle quelle dans le HTML par un aspirateur naïf. Toute
+// personne ouvrant les outils de développement la retrouve en une minute.
+// La seule vraie protection serait un proxy côté serveur détenant la clé.
+const env = import.meta.env as Record<string, string | undefined>;
+const brandfetchClientId =
+  env.PUBLIC_CLIENTBRANDFETCH ?? env.CLIENTBRANDFETCH ?? '';
+const encodedClientId = brandfetchClientId ? btoa(brandfetchClientId) : '';
+
+const client = activeClient;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+// `logo` et `symbol` sont livrés en fond transparent : ce sont eux qui
+// s'intègrent à la matière. `icon` est une vignette carrée, souvent avec
+// un fond plein — d'où sa dernière place.
+const variants = [
+  { value: 'logo', label: 'Logo' },
+  { value: 'symbol', label: 'Symbole' },
+  { value: 'icon', label: 'Icône' },
+];
+
+// `theme` chez Brandfetch désigne la couleur du tracé, pas celle du support.
+// `dark` = tracé foncé, prévu pour un fond clair : c'est le cas de nos objets,
+// donc le défaut. `light` renvoie souvent un tracé blanc, invisible ici.
+const themes = [
+  { value: 'dark', label: 'Foncé' },
+  { value: 'light', label: 'Clair' },
+];
+
+const renders = [
+  { value: 'flat', label: 'Encré' },
+  { value: 'engrave-dark', label: 'Gravé' },
+  { value: 'engrave-light', label: 'Gaufré' },
+];
+---
+
+<BaseLayout
+  client={client}
+  title="Votre logo sur l'objet · Réusit"
+  description="Prévisualisez le logo de votre entreprise sur une pièce de la collection."
+  noindex
+>
+  <SiteHeader client={client} />
+
+  <main id="main">
+    <section class="lab-section" aria-labelledby="lab-title">
+      <div class="container">
+        <SectionHeader
+          eyebrow="Personnalisation"
+          title="Votre logo sur l'objet"
+          intro="Cherchez votre entreprise, choisissez le mode de marquage, puis placez le logo à l'endroit voulu. L'aperçu est une simulation destinée à se projeter, pas un rendu contractuel."
+          titleId="lab-title"
+        />
+
+        <div class="lab-grid">
+          <figure class="product-visual">
+            <Image
+              src={productPhoto}
+              alt="Médaillon gravé, avec la zone de marquage du logo"
+              widths={[480, 768, 1024, 1536]}
+              sizes="(max-width: 900px) 92vw, 560px"
+            />
+            <div
+              class="logo-zone"
+              tabindex="0"
+              aria-label="Zone du logo : glissez pour déplacer, touches fléchées pour ajuster"
+            >
+              <span class="logo-placeholder">Votre logo</span>
+              <span class="logo-mark" hidden></span>
+            </div>
+          </figure>
+
+          <div class="stage-below">
+            <div class="stage-tools">
+              <label class="tool-size" for="logo-size">
+                <span>Taille</span>
+                <input
+                  id="logo-size"
+                  type="range"
+                  min="4"
+                  max="90"
+                  step="1"
+                  value="42"
+                />
+              </label>
+              <button type="button" class="tool-reset" id="logo-reset">
+                Recentrer
+              </button>
+            </div>
+            <p class="stage-hint">
+              Glissez le logo pour le replacer. Au clavier : flèches pour
+              déplacer, + et − pour la taille.
+            </p>
+          </div>
+
+          <div class="lab-panel">
+            <form id="logo-form" class="devis-form logo-form" data-cid={encodedClientId}>
+              <div class="form-part">
+                <div class="form-part-title">1 · Votre entreprise</div>
+                <div class="field">
+                  <label for="logo-domain">Nom ou site de l'entreprise</label>
+                  <div class="logo-search">
+                    <input
+                      id="logo-domain"
+                      name="domain"
+                      type="text"
+                      inputmode="search"
+                      placeholder="decathlon.fr"
+                      autocomplete="off"
+                      aria-autocomplete="list"
+                      aria-expanded="false"
+                      required
+                    />
+                    <ul id="logo-suggestions" role="listbox" hidden></ul>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-part">
+                <div class="form-part-title">2 · Le marquage</div>
+
+                <fieldset class="choice is-wide">
+                  <legend>Version</legend>
+                  <div class="seg-row">
+                    {
+                      variants.map((option, index) => (
+                        <label class="seg">
+                          <input
+                            type="radio"
+                            name="variant"
+                            value={option.value}
+                            checked={index === 0}
+                          />
+                          <span>{option.label}</span>
+                        </label>
+                      ))
+                    }
+                  </div>
+                </fieldset>
+
+                <div class="choice-pair">
+                  <fieldset class="choice">
+                    <legend>Tracé</legend>
+                    <div class="seg-row">
+                      {
+                        themes.map((option, index) => (
+                          <label class="seg">
+                            <input
+                              type="radio"
+                              name="theme"
+                              value={option.value}
+                              checked={index === 0}
+                            />
+                            <span>{option.label}</span>
+                          </label>
+                        ))
+                      }
+                    </div>
+                  </fieldset>
+
+                  <fieldset class="choice">
+                    <legend>Technique</legend>
+                    <div class="seg-row">
+                      {
+                        renders.map((option, index) => (
+                          <label class="seg">
+                            <input
+                              type="radio"
+                              name="render"
+                              value={option.value}
+                              checked={index === 0}
+                            />
+                            <span>{option.label}</span>
+                          </label>
+                        ))
+                      }
+                    </div>
+                  </fieldset>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="pill-btn is-small">
+                  Afficher le logo
+                  <Icon name="arrow-right" size={13} />
+                </button>
+              </div>
+
+              <p
+                id="logo-feedback"
+                class="logo-feedback"
+                role="status"
+                aria-live="polite"
+              >
+              </p>
+
+              <noscript>
+                <p class="logo-feedback">
+                  La recherche de logo nécessite JavaScript.
+                </p>
+              </noscript>
+
+              <details class="lab-advanced">
+                <summary>Réglages avancés</summary>
+                <div class="field">
+                  <label for="logo-client-id">
+                    Autre client ID Brandfetch <span class="opt">(facultatif)</span>
+                  </label>
+                  <input
+                    id="logo-client-id"
+                    name="client-id"
+                    type="text"
+                    autocomplete="off"
+                    placeholder="Laisser vide pour le compte du site"
+                  />
+                </div>
+              </details>
+            </form>
+          </div>
+        </div>
+
+        <p class="lab-back">
+          <a href={`${base}/`}>Retour à la collection</a>
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <SiteFooter client={client} />
+</BaseLayout>
+
+<script>
+  import { initLogoPreview } from '~/scripts/logo-preview';
+  import { initMotion } from '~/scripts/reveal';
+
+  initLogoPreview();
+  initMotion();
+</script>
+
+<style>
+  /* Le header du site est fixe : la section démarre sous lui. */
+  .lab-section {
+    padding-top: calc(var(--sp-9) + 40px);
+  }
+
+  /* Deux colonnes, deux rangées : la photo et ses outils occupent la
+     colonne de gauche, le panneau de réglages traverse les deux rangées
+     pour se caler exactement sur la hauteur de la colonne photo. */
+  .lab-grid {
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    grid-template-rows: auto auto;
+    gap: var(--sp-4) var(--sp-7);
+  }
+
+  .product-visual {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: start;
+    position: relative;
+    margin: 0;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--c-border);
+    box-shadow: var(--shadow-md);
+    background: var(--c-surface);
+  }
+
+  .stage-below {
+    grid-column: 1;
+    grid-row: 2;
+    display: grid;
+    gap: var(--sp-3);
+    align-content: start;
+  }
+
+  /* La carte traverse les deux rangées : elle commence au bord haut de la
+     photo et finit au bas de la colonne de gauche. Son contenu tient dans
+     cette hauteur, donc c'est bien la photo qui dicte la taille. */
+  .lab-panel {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    background: color-mix(in srgb, var(--c-surface) 70%, transparent);
+    border: 1px solid color-mix(in srgb, var(--c-border-strong) 60%, transparent);
+    border-radius: var(--radius-lg);
+    padding: var(--sp-5);
+    box-shadow: var(--shadow-md);
+  }
+
+  /* Le <img> est produit par astro:assets, hors du scope du composant. */
+  .product-visual :global(picture),
+  .product-visual > :global(img) {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  /* Positionnée par son coin haut-gauche, sans `transform`. Un centrage par
+     translate créerait un contexte d'empilement, et les `mix-blend-mode` du
+     marquage ne verraient plus la photo : tout l'effet de matière tomberait.
+     Le script convertit le centre logique en coin au moment de poser. */
+  .logo-zone {
+    position: absolute;
+    left: 29%;
+    top: 50%;
+    width: 42%;
+    padding: var(--sp-1);
+    border: 1px dashed color-mix(in srgb, var(--c-heading) 45%, transparent);
+    border-radius: var(--radius-sm);
+    display: grid;
+    place-items: center;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    transition: border-color var(--transition-fast);
+  }
+
+  .logo-zone:hover {
+    border-color: var(--c-accent);
+  }
+
+  .logo-zone.dragging {
+    cursor: grabbing;
+    border-color: var(--c-accent);
+  }
+
+  .logo-zone:focus-visible {
+    outline: 2px solid var(--c-accent);
+    outline-offset: 3px;
+  }
+
+  /* Pastille claire : le libellé doit rester lisible quelle que soit la
+     photo qui passe derrière. */
+  .logo-placeholder {
+    font-size: var(--fs-micro);
+    letter-spacing: var(--ls-eyebrow);
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--c-heading);
+    text-align: center;
+    padding: var(--sp-1) var(--sp-3);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--c-bg) 88%, transparent);
+  }
+
+  /* Voile d'attente pendant le chargement d'un logo. */
+  .logo-zone.is-loading::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    background: color-mix(in srgb, var(--c-bg) 55%, transparent);
+  }
+
+  /* ============================================================
+     MARQUAGE
+     Le conteneur est dans le markup (donc scopé) ; seul le <img> est
+     injecté par le script, d'où le :global() sur lui seul.
+
+     Le relief vient de deux copies de la même image, posées en
+     pseudo-éléments à partir de --logo-url et décalées d'un pixel ou
+     deux. Ces copies passent SOUS le logo : seule la frange qui dépasse
+     reste visible, ce qui donne la lèvre claire d'une gravure ou l'ombre
+     portée d'un gaufrage. Aucune isolation ici : les fusions doivent voir
+     la photo qui se trouve dessous, sinon l'effet est neutralisé.
+     ============================================================ */
+  .logo-mark {
+    position: relative;
+    display: block;
+    width: 100%;
+  }
+
+  .logo-mark > :global(img) {
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: 100%;
+    height: auto;
+    pointer-events: none;
+    -webkit-user-drag: none;
+  }
+
+  .logo-mark::before,
+  .logo-mark::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: var(--logo-url) center / contain no-repeat;
+    pointer-events: none;
+    opacity: 0;
+  }
+
+  /* Encré : couleurs conservées, simplement posées sur la matière.
+     Sur un logo non détouré, le multiply escamote le fond blanc. Sur un
+     logo détouré, il effacerait au contraire les tracés clairs : on peint
+     alors normalement, avec une ombre courte pour asseoir le marquage. */
+  .logo-zone[data-render='flat'] .logo-mark > :global(img) {
+    mix-blend-mode: multiply;
+    filter: saturate(0.95);
+    opacity: 0.96;
+  }
+  .logo-zone[data-cut][data-render='flat'] .logo-mark > :global(img) {
+    mix-blend-mode: normal;
+    filter: saturate(0.95) drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.3));
+    opacity: 0.97;
+  }
+
+  /* Gravure laser : trait brûlé, avec une lèvre claire juste dessous. */
+  .logo-zone[data-render='engrave-dark'] .logo-mark > :global(img) {
+    mix-blend-mode: multiply;
+    filter: grayscale(1) brightness(0.4) contrast(1.55);
+    opacity: 0.9;
+  }
+  .logo-zone[data-render='engrave-dark'] .logo-mark::before {
+    transform: translateY(1.5px);
+    mix-blend-mode: screen;
+    filter: grayscale(1) brightness(2.6);
+    opacity: 0.55;
+  }
+
+  /* Gaufrage : la matière est repoussée, le logo n'a presque plus de
+     couleur. Une ombre dessous, une lumière dessus. */
+  .logo-zone[data-render='engrave-light'] .logo-mark > :global(img) {
+    mix-blend-mode: screen;
+    filter: grayscale(1) brightness(2.1);
+    opacity: 0.66;
+  }
+  .logo-zone[data-render='engrave-light'] .logo-mark::before {
+    transform: translateY(2px);
+    mix-blend-mode: multiply;
+    filter: grayscale(1) brightness(0.35);
+    opacity: 0.55;
+  }
+
+  /* --- Outils sous la photo --- */
+  .stage-tools {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-4);
+    padding: var(--sp-2) var(--sp-4);
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: 999px;
+  }
+
+  .tool-size {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+  }
+
+  .tool-size > span {
+    font-size: var(--fs-micro);
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--c-muted);
+    font-weight: 500;
+  }
+
+  .tool-size input[type='range'] {
+    flex: 1;
+    accent-color: var(--c-accent);
+    cursor: pointer;
+  }
+
+  .tool-reset {
+    font-size: var(--fs-small);
+    color: var(--c-muted);
+    font-weight: 500;
+    padding: var(--sp-1) 0;
+    border-bottom: 1px solid transparent;
+    transition: color var(--transition-fast),
+      border-color var(--transition-fast);
+  }
+
+  .tool-reset:hover {
+    color: var(--c-accent);
+    border-bottom-color: currentColor;
+  }
+
+  .stage-hint {
+    font-size: var(--fs-small);
+    color: var(--c-muted);
+    margin: 0;
+  }
+
+  /* --- Panneau de réglages --- */
+  .logo-form {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  .form-part {
+    margin-bottom: var(--sp-5);
+  }
+
+  .logo-search {
+    position: relative;
+  }
+
+  /* Les suggestions sont créées en JavaScript : elles ne portent pas
+     l'attribut de scope d'Astro, d'où :global() sur tout ce qui est
+     sous #logo-suggestions. Sans cela, aucune de ces règles ne s'applique. */
+  #logo-suggestions {
+    position: absolute;
+    top: calc(100% + var(--sp-2));
+    left: 0;
+    right: 0;
+    z-index: 20;
+    margin: 0;
+    padding: var(--sp-1);
+    list-style: none;
+    background: var(--c-surface);
+    border: 1px solid var(--c-border-strong);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-lg);
+    max-height: 244px;
+    overflow-y: auto;
+  }
+
+  #logo-suggestions :global(li) {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: 5px var(--sp-2);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-small);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+  }
+
+  #logo-suggestions :global(li.active),
+  #logo-suggestions :global(li:hover) {
+    background: color-mix(in srgb, var(--c-accent) 8%, transparent);
+  }
+
+  #logo-suggestions :global(img) {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+  }
+
+  #logo-suggestions :global(.sugg-name) {
+    font-weight: 600;
+    color: var(--c-heading);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  #logo-suggestions :global(.sugg-domain) {
+    margin-left: auto;
+    padding-left: var(--sp-2);
+    color: var(--c-muted);
+    white-space: nowrap;
+  }
+
+  /* --- Choix segmentés --- */
+  /* « Version » occupe sa propre ligne : à trois pastilles, elle passait
+     sur deux lignes dès que le panneau se resserrait. */
+  .choice.is-wide {
+    margin-bottom: var(--sp-4);
+  }
+
+  .choice-pair {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--sp-4);
+  }
+
+  .choice {
+    border: none;
+    margin: 0;
+    min-width: 0;
+  }
+
+  .choice legend {
+    font-size: 11px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--c-muted);
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+
+  .seg-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  /* `label` du site est en capitales : neutralisé ici. */
+  .seg {
+    position: relative;
+    text-transform: none;
+    letter-spacing: 0;
+    cursor: pointer;
+  }
+
+  .seg input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .seg > span {
+    display: block;
+    padding: 5px 13px;
+    border: 1px solid var(--c-border-strong);
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--c-text);
+    line-height: 1.4;
+    white-space: nowrap;
+    transition: border-color var(--transition-fast),
+      background var(--transition-fast), color var(--transition-fast);
+  }
+
+  .seg:hover > span {
+    border-color: var(--c-accent);
+  }
+
+  .seg input:checked + span {
+    background: var(--c-heading);
+    border-color: var(--c-heading);
+    color: #fff;
+  }
+
+  .seg input:focus-visible + span {
+    outline: 2px solid var(--c-accent);
+    outline-offset: 2px;
+  }
+
+  .logo-feedback {
+    min-height: 1.4em;
+    margin: var(--sp-3) 0 0;
+    font-size: var(--fs-small);
+    line-height: 1.5;
+    color: var(--c-muted);
+  }
+
+  .logo-feedback.error {
+    color: var(--c-accent);
+  }
+
+  /* Poussé en bas du panneau : c'est un réglage de service. */
+  .lab-advanced {
+    margin-top: auto;
+    padding-top: var(--sp-4);
+    border-top: 1px solid var(--c-border);
+  }
+
+  .lab-advanced summary {
+    font-size: var(--fs-small);
+    color: var(--c-muted);
+    cursor: pointer;
+    font-weight: 500;
+  }
+
+  .lab-advanced summary:hover {
+    color: var(--c-accent);
+  }
+
+  .lab-advanced .field {
+    margin-top: var(--sp-3);
+  }
+
+  .lab-back {
+    margin: var(--sp-6) 0 0;
+    font-size: var(--fs-small);
+  }
+
+  .lab-back a {
+    color: var(--c-muted);
+    border-bottom: 1px solid var(--c-border-strong);
+    transition: color var(--transition-fast),
+      border-color var(--transition-fast);
+  }
+
+  .lab-back a:hover {
+    color: var(--c-accent);
+    border-bottom-color: currentColor;
+  }
+
+  @media (max-width: 900px) {
+    .lab-grid {
+      grid-template-columns: 1fr;
+      gap: var(--sp-4);
+    }
+
+    /* Une seule colonne : on rend leur place naturelle aux trois blocs. */
+    .product-visual,
+    .stage-below,
+    .lab-panel {
+      grid-column: 1;
+      grid-row: auto;
+    }
+
+    .lab-panel {
+      margin-top: var(--sp-3);
+    }
+  }
+
+  @media (max-width: 560px) {
+    .stage-tools {
+      border-radius: var(--radius);
+      flex-wrap: wrap;
+      gap: var(--sp-3) var(--sp-4);
+    }
+
+    .choice-pair {
+      grid-template-columns: 1fr;
+      gap: var(--sp-3);
+    }
+  }
+</style>

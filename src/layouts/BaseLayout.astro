@@ -4,10 +4,18 @@ import '~/styles/global.css';
 
 interface Props {
   client: Client;
+  /** Remplace le titre du client. Utile aux pages annexes. */
+  title?: string;
+  description?: string;
+  /** Page hors référencement (outils internes, pages de test). */
+  noindex?: boolean;
 }
 
-const { client } = Astro.props;
+const { client, title, description, noindex = false } = Astro.props;
 const { palette, meta } = client;
+
+const pageTitle = title ?? meta.title;
+const pageDescription = description ?? meta.description;
 ---
 
 <!doctype html>
@@ -15,13 +23,14 @@ const { palette, meta } = client;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{meta.title}</title>
-    <meta name="description" content={meta.description} />
+    <title>{pageTitle}</title>
+    <meta name="description" content={pageDescription} />
     <meta name="generator" content={Astro.generator} />
+    {noindex && <meta name="robots" content="noindex" />}
 
     <meta property="og:type" content="website" />
-    <meta property="og:title" content={meta.title} />
-    <meta property="og:description" content={meta.description} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={pageDescription} />
     <meta property="og:locale" content="fr_FR" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />

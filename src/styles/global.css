@@ -414,6 +414,14 @@ section {
   line-height: 1.7;
 }
 
+/* Deux appels à l'action côte à côte, repliés l'un sous l'autre au besoin. */
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3) var(--sp-4);
+}
+
 /* Bouton pilule : partagé hero / formulaire */
 .pill-btn {
   display: inline-flex;
@@ -447,6 +455,33 @@ section {
   opacity: 0.6;
   cursor: default;
   transform: none;
+}
+
+/* Variante compacte, pour les panneaux d'outils. */
+.pill-btn.is-small {
+  padding: 9px var(--sp-5);
+  font-size: 13.5px;
+  gap: var(--sp-2);
+}
+
+/* Variante secondaire : même gabarit, poids visuel moindre. */
+.pill-btn.is-ghost {
+  background: transparent;
+  color: var(--c-heading);
+  border: 1px solid var(--c-border-strong);
+  box-shadow: none;
+}
+@media (hover: hover) {
+  .pill-btn.is-ghost:hover {
+    background: color-mix(in srgb, var(--c-accent) 8%, transparent);
+    border-color: var(--c-accent);
+    color: var(--c-accent);
+    box-shadow: none;
+  }
+  /* Le crayon ne descend pas comme la flèche du bouton principal. */
+  .pill-btn.is-ghost:hover svg {
+    transform: rotate(-8deg);
+  }
 }
 
 .hero-deco {

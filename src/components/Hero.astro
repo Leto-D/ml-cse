@@ -10,6 +10,13 @@ interface Props {
 
 const { client } = Astro.props;
 const { hero } = client;
+
+// Le site est publié dans un sous-dossier : tout lien interne doit passer
+// par BASE_URL, sinon il pointe à la racine du domaine.
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const secondaryHref = hero.ctaSecondary
+  ? `${base}/${hero.ctaSecondary.href.replace(/^\//, '')}`
+  : undefined;
 ---
 
 <section class="hero" aria-labelledby="hero-title">
@@ -24,10 +31,20 @@ const { hero } = client;
         >
       </h1>
       <p class="hero-subtitle">{hero.subtitle}</p>
-      <a href="#produits" class="pill-btn">
-        {hero.cta}
-        <Icon name="arrow-down" />
-      </a>
+      <div class="hero-actions">
+        <a href="#produits" class="pill-btn">
+          {hero.cta}
+          <Icon name="arrow-down" />
+        </a>
+        {
+          hero.ctaSecondary && (
+            <a href={secondaryHref} class="pill-btn is-ghost">
+              {hero.ctaSecondary.label}
+              <Icon name="engrave" />
+            </a>
+          )
+        }
+      </div>
     </div>
 
     <GiftBox />

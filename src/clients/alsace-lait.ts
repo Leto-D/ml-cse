@@ -47,6 +47,10 @@ export const alsaceLait: Client = {
     subtitle:
       "Une collection d'objets personnalisables (médaillons, boules et supports de téléphone) pensée pour marquer la fin d'année avec élégance et authenticité régionale.",
     cta: 'Découvrir les cadeaux',
+    ctaSecondary: {
+      label: 'Votre logo',
+      href: 'lab/logo',
+    },
   },
 
   products: {
