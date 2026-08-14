@@ -27,24 +27,39 @@
     <ellipse class="gift-shadow" cx="120" cy="243" rx="74" ry="10" />
 
     {/*
-      Corps et couvercle se touchent sans se recouvrir : le couvercle occupe
-      68→108, le corps reprend exactement à 108. Aucune surface n'est peinte
-      deux fois. Un recouvrement, même d'une unité, scintille pendant le
-      mouvement, les deux couches étant ré-échantillonnées à chaque image.
-      Le ruban reste continu, y compris quand le couvercle s'envole.
+      Aucune forme ne doit partager une arête avec une autre. Deux bords
+      antialiasés qui se rejoignent laissent un filet clair d'un pixel, et
+      la couche promue par `will-change` étant ré-échantillonnée à chaque
+      image, ce filet scintille pendant la respiration du coffret.
+
+      Le corps commence à 108 ; le couvercle descend jusqu'à 109, donc il
+      le recouvre d'une unité. Ce recouvrement est sans danger parce que
+      les deux surfaces sont opaques : rien n'est composité deux fois, la
+      frontière est tracée par le seul bord bas du couvercle. C'est bien
+      lui qu'on allonge, et non le corps : le couvercle s'envole, sa
+      géométrie n'a donc aucune conséquence sur le coffret ouvert.
+
+      Surtout, le ruban du couvercle descend DEUX unités plus bas que son
+      rectangle rouge (68→111 contre 68→109). Sans ce dépassement, le bord
+      bas du rouge traverse la colonne du ruban et son antialiasing reste
+      visible en filet sombre au milieu du doré : mesuré, ce filet variait
+      de 34 niveaux de luminance selon le calage sous-pixel, ce qui est
+      exactement le scintillement perçu. Avec le dépassement, la variation
+      tombe à zéro.
     */}
     <g class="gift-body">
       <rect x="38" y="108" width="164" height="128" rx="8" fill="url(#gift-body)" />
       {/* Ruban vertical */}
       <rect x="107" y="108" width="26" height="128" fill="var(--c-gold)" />
-      {/* Reflet doux sur la face */}
-      <rect x="38" y="108" width="164" height="128" rx="8" fill="#fff" opacity="0.06" />
+      {/* Reflet doux sur la face, rentré d'une unité pour ne pas repeindre
+          le contour du corps par-dessus lui-même. */}
+      <rect x="39" y="109" width="162" height="126" rx="7" fill="#fff" opacity="0.06" />
     </g>
 
     {/* Couvercle : c'est lui qui se soulève */}
     <g class="gift-lid">
-      <rect x="26" y="68" width="188" height="40" rx="7" fill="url(#gift-lid)" />
-      <rect x="107" y="68" width="26" height="40" fill="var(--c-gold)" />
+      <rect x="26" y="68" width="188" height="41" rx="7" fill="url(#gift-lid)" />
+      <rect x="107" y="68" width="26" height="43" fill="var(--c-gold)" />
       {/* Nœud : deux boucles et un centre */}
       <g class="gift-bow">
         <path
