@@ -12,6 +12,34 @@ import { playLetterAnimation, clearLetterAnimation } from './letter-animation';
 const prefersReducedMotion = () =>
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+/**
+ * Environnements sans backend de formulaire : développement local et
+ * prévisualisation GitHub Pages, qui ne sert que des fichiers statiques.
+ * L'envoi y est simulé pour que le parcours reste démontrable ; une bannière
+ * l'annonce explicitement pour ne pas laisser croire à un envoi réel.
+ */
+function isDemoEnvironment(): boolean {
+  const { protocol, hostname } = window.location;
+  return (
+    protocol === 'file:' ||
+    ['localhost', '127.0.0.1'].includes(hostname) ||
+    hostname.endsWith('.github.io')
+  );
+}
+
+/** Bandeau posé au-dessus du formulaire quand aucun envoi réel n'est possible. */
+function initDemoNotice() {
+  if (!isDemoEnvironment()) return;
+  const form = document.getElementById('devis-form');
+  if (!form) return;
+
+  const notice = document.createElement('p');
+  notice.className = 'demo-notice';
+  notice.textContent =
+    'Démonstration : le formulaire rejoue le parcours complet, aucune demande n’est réellement envoyée.';
+  form.prepend(notice);
+}
+
 /** Boutons +/- de la quantité. */
 function initSteppers() {
   document.querySelectorAll<HTMLElement>('.stepper').forEach((stepper) => {
@@ -60,6 +88,16 @@ function initSubmit() {
   const showSuccess = () => {
     form.style.display = 'none';
     if (!success) return;
+
+    // En démonstration, la confirmation ne doit pas affirmer un envoi réel.
+    if (isDemoEnvironment() && !success.querySelector('.demo-notice')) {
+      const notice = document.createElement('p');
+      notice.className = 'demo-notice';
+      notice.textContent =
+        'Démonstration : aucune demande n’a réellement été envoyée.';
+      success.appendChild(notice);
+    }
+
     success.hidden = false;
     success.setAttribute('role', 'status');
     success.setAttribute('tabindex', '-1');
@@ -101,12 +139,7 @@ function initSubmit() {
     if (submitBtn) submitBtn.disabled = true;
     form.querySelector('.form-error')?.remove();
 
-    // En local, aucun backend Netlify n'écoute : on simule pour tester l'animation.
-    const isLocal =
-      window.location.protocol === 'file:' ||
-      ['localhost', '127.0.0.1'].includes(window.location.hostname);
-
-    const sent = isLocal
+    const sent = isDemoEnvironment()
       ? new Promise<void>((resolve) => window.setTimeout(resolve, 900))
       : fetch(import.meta.env.BASE_URL, {
           method: 'POST',
@@ -133,6 +166,7 @@ function initSubmit() {
 }
 
 export function initQuoteForm(): void {
+  initDemoNotice();
   initSteppers();
   initProductLinks();
   initSuccessFromQuery();

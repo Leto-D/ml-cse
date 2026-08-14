@@ -1,0 +1,61 @@
+---
+/**
+ * Coffret cadeau du hero.
+ *
+ * Il repose fermé tant qu'on est en haut de page. Au premier défilement, le
+ * couvercle se soulève et bascule, puis des confettis jaillissent et retombent
+ * sur la section suivante avant de disparaître. Voir scripts/gift-box.ts.
+ *
+ * Le SVG est décoratif : aucune information ne dépend de lui.
+ */
+---
+
+<div class="gift" data-gift aria-hidden="true">
+  <svg class="gift-svg" viewBox="0 0 240 260" width="240" height="260" focusable="false">
+    <defs>
+      <linearGradient id="gift-body" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="var(--c-accent)" />
+        <stop offset="100%" stop-color="var(--c-accent-dark)" />
+      </linearGradient>
+      <linearGradient id="gift-lid" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="var(--c-accent)" />
+        <stop offset="100%" stop-color="var(--c-accent-dark)" />
+      </linearGradient>
+    </defs>
+
+    {/* Ombre portée au sol, pour poser l'objet */}
+    <ellipse class="gift-shadow" cx="120" cy="243" rx="74" ry="10" />
+
+    {/* Corps du coffret */}
+    <g class="gift-body">
+      <rect x="38" y="108" width="164" height="128" rx="8" fill="url(#gift-body)" />
+      {/* Ruban vertical */}
+      <rect x="107" y="108" width="26" height="128" fill="var(--c-gold)" opacity="0.95" />
+      {/* Reflet doux sur la face */}
+      <rect x="38" y="108" width="164" height="128" rx="8" fill="#fff" opacity="0.06" />
+    </g>
+
+    {/* Couvercle : c'est lui qui se soulève */}
+    <g class="gift-lid">
+      <rect x="26" y="76" width="188" height="40" rx="7" fill="url(#gift-lid)" />
+      <rect x="107" y="76" width="26" height="40" fill="var(--c-gold)" />
+      {/* Nœud : deux boucles et un centre */}
+      <g class="gift-bow">
+        <path
+          d="M120 78 C 96 78, 82 58, 92 46 C 102 35, 118 52, 120 76 Z"
+          fill="var(--c-gold)"
+        />
+        <path
+          d="M120 78 C 144 78, 158 58, 148 46 C 138 35, 122 52, 120 76 Z"
+          fill="var(--c-gold)"
+        />
+        <circle cx="120" cy="76" r="9" fill="#D9B36B" />
+      </g>
+    </g>
+  </svg>
+</div>
+
+<script>
+  import { initGiftBox } from '~/scripts/gift-box';
+  initGiftBox();
+</script>

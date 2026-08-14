@@ -1,5 +1,5 @@
 ---
-import { Picture } from 'astro:assets';
+import { Picture, getImage } from 'astro:assets';
 import type { Client } from '~/types';
 import SectionHeader from './SectionHeader.astro';
 
@@ -9,6 +9,19 @@ interface Props {
 
 const { client } = Astro.props;
 const { gallery } = client;
+
+/**
+ * Rythme de la mosaïque : chaque photo reçoit une empreinte sur une grille de
+ * 6 colonnes. L'alternance grand / petit évite la régularité d'un damier.
+ */
+const SHAPES = ['is-tall', 'is-wide', 'is-small', 'is-small', 'is-wide', 'is-tall'];
+
+// Version pleine résolution servie par la visionneuse.
+const fulls = await Promise.all(
+  gallery.photos.map((photo) =>
+    getImage({ src: photo.image, format: 'webp', width: 1600 })
+  )
+);
 ---
 
 <section id="galerie" aria-labelledby="galerie-title">
@@ -20,27 +33,53 @@ const { gallery } = client;
       titleId="galerie-title"
     />
 
-    <div class="gallery-grid stagger">
+    <div class="gallery-mosaic" data-gallery>
       {
         gallery.photos.map((photo, i) => (
-          // La première photo occupe un bloc 2×2 : elle demande plus de résolution.
-          <figure class="gallery-item" style={`--i:${i}`}>
+          <button
+            type="button"
+            class:list={['gallery-cell', SHAPES[i % SHAPES.length]]}
+            style={`--i:${i}`}
+            data-lightbox
+            data-full={fulls[i].src}
+            aria-label={`Agrandir : ${photo.alt}`}
+          >
             <Picture
               src={photo.image}
               formats={['avif', 'webp']}
-              widths={i === 0 ? [560, 900, 1200] : [280, 440, 640]}
-              sizes={
-                i === 0
-                  ? '(max-width: 768px) 48vw, (max-width: 900px) 32vw, 570px'
-                  : '(max-width: 768px) 48vw, (max-width: 900px) 32vw, 285px'
-              }
+              widths={[320, 560, 900]}
+              sizes="(max-width: 700px) 92vw, (max-width: 1000px) 46vw, 380px"
               alt={photo.alt}
               loading="lazy"
               decoding="async"
             />
-          </figure>
+            <span class="gallery-caption">
+              <span>{photo.alt}</span>
+              <svg
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="11" cy="11" r="7" />
+                <line x1="16.5" y1="16.5" x2="21" y2="21" />
+                <line x1="11" y1="8" x2="11" y2="14" />
+                <line x1="8" y1="11" x2="14" y2="11" />
+              </svg>
+            </span>
+          </button>
         ))
       }
     </div>
   </div>
 </section>
+
+<script>
+  import { initLightbox } from '~/scripts/lightbox';
+  initLightbox();
+</script>

@@ -5,7 +5,7 @@
 
 export function initMotion(): void {
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const targets = document.querySelectorAll<HTMLElement>('.reveal, .stagger');
+  const targets = document.querySelectorAll<HTMLElement>('.reveal, .stagger, .gallery-mosaic');
 
   if (reduced || !('IntersectionObserver' in window)) {
     targets.forEach((el) => el.classList.add('is-visible'));

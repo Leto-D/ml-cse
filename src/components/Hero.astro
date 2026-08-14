@@ -2,6 +2,7 @@
 import type { Client } from '~/types';
 import Icon from './Icon.astro';
 import Ornament from './Ornament.astro';
+import GiftBox from './GiftBox.astro';
 
 interface Props {
   client: Client;
@@ -12,7 +13,7 @@ const { hero } = client;
 ---
 
 <section class="hero" aria-labelledby="hero-title">
-  <div class="container">
+  <div class="container hero-grid">
     <div class="hero-content">
       <span class="hero-eyebrow">{hero.eyebrow}</span>
       <h1 id="hero-title">
@@ -28,6 +29,8 @@ const { hero } = client;
         <Icon name="arrow-down" />
       </a>
     </div>
+
+    <GiftBox />
   </div>
   <Ornament class="hero-deco" />
 </section>
