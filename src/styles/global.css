@@ -360,17 +360,21 @@ section {
 
 /* ============================================================
    CONFETTIS
-   Canvas plein écran, purement décoratif, retiré une fois la
-   séquence terminée. Plusieurs centaines de particules ne
-   tiendraient pas la cadence en éléments DOM.
+   Calque plein écran, purement décoratif, retiré après la chute.
    ============================================================ */
-.confetti-canvas {
+.confetti-layer {
   position: fixed;
   inset: 0;
   z-index: 90;
-  width: 100%;
-  height: 100%;
   pointer-events: none;
+  overflow: hidden;
+}
+.confetti {
+  position: absolute;
+  width: 9px;
+  height: 13px;
+  border-radius: 2px;
+  will-change: transform, opacity;
 }
 .hero-eyebrow {
   font-size: var(--fs-micro);

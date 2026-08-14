@@ -1,22 +1,92 @@
 /**
- * Coffret du hero : ouverture au défilement.
+ * Coffret du hero : ouverture au défilement et pluie de confettis.
  *
- * Dès les premiers pixels de défilement, le couvercle se soulève et libère une
- * gerbe qui se rassemble en boule de Noël. La boule se compose à une position
- * d'écran fixe, donc toujours visible ; puis, quand elle se défait, la page
- * glisse doucement vers la section suivante, comme si l'animation y conduisait.
- *
- * Revenir tout en haut réarme la séquence.
+ * Déclenché une fois quand le hero est suffisamment sorti de l'écran. Les
+ * confettis vivent dans un calque `position: fixed` retiré du DOM à la fin, et
+ * ne captent jamais les clics. Revenir tout en haut réarme l'animation.
  */
 
-import { playConfettiBauble } from './confetti-bauble';
-import { assistScroll } from './scroll-assist';
+const CONFETTI_COUNT = 44;
+const FALL_MS = 2600;
 
 /**
- * Proportion du hero défilée avant l'ouverture. Volontairement basse : le
- * coffret doit encore être bien à l'écran quand la gerbe en sort.
+ * Seuil de déclenchement : proportion du hero déjà défilée. Volontairement bas,
+ * pour que le coffret soit encore bien dans l'écran au moment de la gerbe.
  */
-const TRIGGER_RATIO = 0.12;
+const TRIGGER_RATIO = 0.16;
+
+function colors(): string[] {
+  const style = getComputedStyle(document.documentElement);
+  const read = (name: string, fallback: string) =>
+    style.getPropertyValue(name).trim() || fallback;
+
+  return [
+    read('--c-accent', '#D32F2F'),
+    read('--c-gold', '#C5A059'),
+    read('--c-heading', '#1A2C5E'),
+    '#FFFFFF',
+  ];
+}
+
+/**
+ * Fait jaillir les confettis depuis le coffret puis les laisse retomber.
+ * Le calque se supprime seul ; rien à nettoyer côté appelant.
+ */
+function burst(origin: DOMRect) {
+  const layer = document.createElement('div');
+  layer.className = 'confetti-layer';
+  document.body.appendChild(layer);
+
+  const palette = colors();
+  const startX = origin.left + origin.width / 2;
+  const startY = origin.top + origin.height * 0.3;
+
+  for (let i = 0; i < CONFETTI_COUNT; i++) {
+    const piece = document.createElement('span');
+    piece.className = 'confetti';
+    piece.style.background = palette[i % palette.length];
+    piece.style.left = `${startX}px`;
+    piece.style.top = `${startY}px`;
+    // Deux formats : rectangles et disques, pour varier la silhouette.
+    if (i % 3 === 0) piece.style.borderRadius = '50%';
+    layer.appendChild(piece);
+
+    // Éventail vers le haut, puis chute au-delà du bas de l'écran.
+    const angle = (-90 + (i / CONFETTI_COUNT) * 150 - 75) * (Math.PI / 180);
+    const power = 170 + (i % 7) * 30;
+    const peakX = Math.cos(angle) * power;
+    // La gerbe ne doit pas dépasser le haut de l'écran, sinon on ne la voit pas.
+    const maxRise = Math.max(60, startY - 70);
+    const peakY = Math.max(Math.sin(angle) * power, -maxRise);
+    const driftX = peakX * 2.1;
+    const fallY = window.innerHeight - startY + 140;
+    const spin = (i % 2 === 0 ? 1 : -1) * (360 + (i % 5) * 180);
+
+    piece.animate(
+      [
+        { transform: 'translate(-50%, -50%) rotate(0deg)', opacity: 1, offset: 0 },
+        {
+          transform: `translate(calc(-50% + ${peakX}px), calc(-50% + ${peakY}px)) rotate(${spin * 0.35}deg)`,
+          opacity: 1,
+          offset: 0.28,
+        },
+        {
+          transform: `translate(calc(-50% + ${driftX}px), calc(-50% + ${fallY}px)) rotate(${spin}deg)`,
+          opacity: 0,
+          offset: 1,
+        },
+      ],
+      {
+        duration: FALL_MS + (i % 6) * 180,
+        delay: (i % 9) * 26,
+        easing: 'cubic-bezier(0.25, 0.6, 0.4, 1)',
+        fill: 'forwards',
+      }
+    );
+  }
+
+  window.setTimeout(() => layer.remove(), FALL_MS + 1400);
+}
 
 export function initGiftBox(): void {
   const gift = document.querySelector<HTMLElement>('[data-gift]');
@@ -30,38 +100,16 @@ export function initGiftBox(): void {
     return;
   }
 
-  const header = document.querySelector<HTMLElement>('#produits .section-header');
   let opened = false;
 
-  /** Amène la section suivante sous le titre, sans jamais remonter la page. */
-  const glideToProducts = () => {
-    if (!header) return;
-    const target = window.scrollY + header.getBoundingClientRect().top - 120;
-    if (target > window.scrollY) assistScroll(target, 1100);
-  };
-
   const onScroll = () => {
-    if (!opened && window.scrollY / Math.max(hero.offsetHeight, 1) > TRIGGER_RATIO) {
+    const progress = window.scrollY / Math.max(hero.offsetHeight, 1);
+
+    if (!opened && progress > TRIGGER_RATIO) {
       opened = true;
       gift.classList.add('is-open');
-
-      // Laisse le couvercle se soulever avant de libérer la gerbe.
-      window.setTimeout(() => {
-        const rect = gift.getBoundingClientRect();
-        const onScreen = rect.bottom > 0 && rect.top < window.innerHeight;
-        const origin = onScreen
-          ? rect
-          : new DOMRect(window.innerWidth / 2, 0, 0, 0);
-
-        // La boule se compose à l'emplacement du coffret, pas au centre de
-        // l'écran : elle semble sortir de la boîte, et surtout elle ne vient
-        // pas se poser sur le titre ni sur le bouton quand tout est empilé.
-        const center = onScreen
-          ? { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }
-          : { x: window.innerWidth / 2, y: window.innerHeight * 0.4 };
-
-        playConfettiBauble(origin, { center, onDissolve: glideToProducts });
-      }, 300);
+      // Laisse le couvercle se soulever avant de libérer les confettis.
+      window.setTimeout(() => burst(gift.getBoundingClientRect()), 260);
       return;
     }
 
