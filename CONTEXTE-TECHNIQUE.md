@@ -169,6 +169,12 @@ Mécanismes à connaître :
   **tracé**, pas celle du support : `dark` (tracé foncé) est le défaut, puisque
   les objets sont clairs. `light` renvoie souvent un tracé blanc, qui disparaît
   entièrement sous un `multiply`.
+- **Repli automatique de version.** Toutes les marques n'ont pas les trois
+  versions. Si celle demandée renvoie 404, le script parcourt les autres dans
+  l'ordre `logo → symbole → icône`, affiche la première disponible et **bascule
+  le bouton** dessus en l'annonçant. Le visiteur n'a donc jamais à les essayer
+  une par une. Un jeton `previewToken` garantit que seul le dernier aperçu
+  demandé s'affiche, les chaînes de repli étant asynchrones.
 - **`data-cut` sur la zone** signale un logo détouré. En mode « Encré », le
   `multiply` n'est appliqué qu'en son absence : sur un tracé clair détouré, il
   effacerait le marquage.
@@ -189,9 +195,15 @@ Pièges :
 ### Garde-fous de consommation
 
 `allow()` dans `logo-preview.ts` tient un compteur par heure glissante dans
-`localStorage` : 40 recherches, 30 aperçus. S'y ajoutent trois caractères
-minimum avant de chercher, 400 ms d'anti-rebond, la balise `noindex` et un
-`robots.txt` interdisant `/lab/`.
+`localStorage` : 160 recherches, 120 aperçus. Le comptage est **par navigateur**,
+pas par adresse IP ni par compte : `localStorage` est cloisonné par origine et
+par profil. Changer de navigateur, passer en navigation privée ou vider le
+stockage remet le compteur à zéro. S'y ajoutent trois caractères minimum avant
+de chercher, 400 ms d'anti-rebond, la balise `noindex` et un `robots.txt`
+interdisant `/lab/`.
+
+Un repli de version peut déclencher jusqu'à trois requêtes image pour un seul
+aperçu, mais ne consomme qu'un jeton : c'est la même demande du visiteur.
 
 Tout cela protège du clic frénétique et de l'onglet oublié. **Aucun de ces
 garde-fous n'arrête un robot** : ils vivent dans le navigateur, et le

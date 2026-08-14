@@ -36,7 +36,20 @@ const DEFAULT_SIZE = '42';
  */
 const QUOTA_KEY = 'logo-preview-quota';
 const QUOTA_WINDOW_MS = 60 * 60 * 1000;
-const QUOTA_LIMITS: Record<string, number> = { search: 40, preview: 30 };
+const QUOTA_LIMITS: Record<string, number> = { search: 160, preview: 120 };
+
+/**
+ * Versions du logo, par ordre de préférence de repli. `logo` d'abord :
+ * Brandfetch le livre en fond transparent, c'est celui qui s'intègre le
+ * mieux à la matière. `icon` en dernier : vignette carrée, souvent à
+ * fond plein, qu'il faut détourer.
+ */
+const VARIANT_ORDER = ['logo', 'symbol', 'icon'] as const;
+const VARIANT_LABELS: Record<string, string> = {
+  logo: 'Logo',
+  symbol: 'Symbole',
+  icon: 'Icône',
+};
 
 /**
  * Détourage du fond : tolérance de couleur, et frange adoucie au-delà.
@@ -370,6 +383,16 @@ export function initLogoPreview(): void {
   let debounce = 0;
   /** Un logo est-il déjà affiché ? Conditionne le rafraîchissement auto. */
   let hasLogo = false;
+  /** Un aperçu peut en chasser un autre : seul le dernier demandé s'affiche. */
+  let previewToken = 0;
+
+  /** Coche une version sans relancer l'aperçu (`checked` n'émet pas `change`). */
+  const setVariant = (value: string): void => {
+    const radio = form.querySelector(
+      `[name="variant"][value="${value}"]`
+    ) as HTMLInputElement | null;
+    if (radio) radio.checked = true;
+  };
 
   const say = (message: string): void => {
     feedback.textContent = message;
@@ -418,9 +441,14 @@ export function initLogoPreview(): void {
     say('Chargement…');
     zone.classList.add('is-loading');
 
-    const url = `${CDN_BASE}/${encodeURIComponent(name)}/theme/${picked(
-      'theme'
-    )}/fallback/404/${picked('variant')}?c=${encodeURIComponent(id)}`;
+    const theme = picked('theme');
+    const chosen = picked('variant');
+    const token = ++previewToken;
+
+    const urlFor = (variant: string): string =>
+      `${CDN_BASE}/${encodeURIComponent(
+        name
+      )}/theme/${theme}/fallback/404/${variant}?c=${encodeURIComponent(id)}`;
 
     const show = (source: string, img: HTMLImageElement, cut: boolean): void => {
       // La même source sert aux copies en relief posées en pseudo-éléments.
@@ -437,37 +465,76 @@ export function initLogoPreview(): void {
       // La hauteur de la zone vient de changer : on repose son coin.
       placement.refresh();
       hasLogo = true;
-      say(
-        'Aperçu à titre indicatif : le rendu réel dépend du support et de la technique.'
-      );
     };
 
-    // Premier essai avec CORS : c'est ce qui autorise la lecture du canevas,
-    // donc le détourage du fond. Un échec ici ne prouve pas que le logo
-    // n'existe pas, d'où la seconde tentative sans CORS avant d'abandonner.
-    const cors = new Image();
-    cors.crossOrigin = 'anonymous';
-    cors.onload = () => {
-      const cleaned = knockoutBackground(cors);
+    /**
+     * Charge une version, en essayant d'abord avec CORS : c'est ce qui
+     * autorise la lecture du canevas, donc le détourage du fond. Un refus
+     * CORS ne prouve pas que l'image n'existe pas, d'où la seconde
+     * tentative sans, avant de conclure que la version est absente.
+     */
+    const load = (url: string, cors: boolean): Promise<HTMLImageElement> =>
+      new Promise((resolve, reject) => {
+        const img = new Image();
+        if (cors) img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error('version absente'));
+        img.src = url;
+      });
+
+    const paint = async (variant: string): Promise<void> => {
+      const url = urlFor(variant);
+      let img: HTMLImageElement;
+      let readable = true;
+      try {
+        img = await load(url, true);
+      } catch {
+        img = await load(url, false); // rejette → version suivante
+        readable = false;
+      }
+
+      const cleaned = readable ? knockoutBackground(img) : null;
       if (!cleaned) {
-        show(url, cors, false);
+        show(url, img, false);
         return;
       }
-      const flat = new Image();
-      flat.onload = () => show(cleaned, flat, true);
-      flat.src = cleaned;
+      show(cleaned, await load(cleaned, false), true);
     };
-    cors.onerror = () => {
-      const plain = new Image();
-      plain.onload = () => show(url, plain, false);
-      plain.onerror = () => {
-        // La zone (placeholder ou logo précédent) reste inchangée.
-        zone.classList.remove('is-loading');
-        fail(`Logo introuvable pour « ${name} ».`);
-      };
-      plain.src = url;
-    };
-    cors.src = url;
+
+    // Toutes les marques n'ont pas les trois versions. Plutôt que de
+    // renvoyer le visiteur les essayer une à une, on parcourt les autres
+    // dans l'ordre de préférence et on bascule le bouton sur celle qui
+    // existe. Le repli ne coûte que des requêtes image, jamais un jeton de
+    // quota supplémentaire : c'est toujours le même aperçu demandé.
+    void (async () => {
+      const order = [chosen, ...VARIANT_ORDER.filter((v) => v !== chosen)];
+
+      for (const variant of order) {
+        try {
+          await paint(variant);
+          // Un réglage a pu changer entretemps : le dernier appel gagne.
+          if (token !== previewToken) return;
+
+          if (variant === chosen) {
+            say(
+              'Aperçu à titre indicatif : le rendu réel dépend du support et de la technique.'
+            );
+          } else {
+            setVariant(variant);
+            say(
+              `Cette marque n’a pas de version « ${VARIANT_LABELS[chosen]} » : voici la version « ${VARIANT_LABELS[variant]} ».`
+            );
+          }
+          return;
+        } catch {
+          // Version absente : on passe à la suivante.
+        }
+      }
+
+      if (token !== previewToken) return;
+      zone.classList.remove('is-loading');
+      fail(`Aucun logo trouvé pour « ${name} ».`);
+    })();
   };
 
   const select = (index: number): void => {
