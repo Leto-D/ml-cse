@@ -874,29 +874,35 @@
       opacity: 0;
       pointer-events: none;
     }
-    .mu-star {
-      display: inline-flex;
+    .mu-check {
+      width: 18px;
+      height: 18px;
       flex-shrink: 0;
-      color: #D5CDBB;
-      transform-origin: center;
-      transition: color 0.3s ease;
+      border: 1.5px solid var(--c-border-strong);
+      border-radius: 4px;
+      background: transparent;
+      display: grid;
+      place-items: center;
+      transition: background 0.2s ease, border-color 0.2s ease;
     }
-    .mu-star svg {
-      fill: currentColor;
+    .mu-check svg {
       display: block;
+      overflow: visible;
     }
-    .mu-item:hover .mu-star {
-      color: #B9AE97;
+    .mu-check .mu-tick {
+      stroke-dasharray: 16;
+      stroke-dashoffset: 16;
+      transition: stroke-dashoffset 0.22s ease-out;
     }
-    .mu-item.is-checked .mu-star {
-      color: var(--c-gold, #C5A059);
-      filter: drop-shadow(0 0 6px rgba(197, 160, 89, 0.65));
-      animation: starPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+    .mu-item:hover .mu-check {
+      border-color: var(--c-heading);
     }
-    @keyframes starPop {
-      0% { transform: scale(0.5) rotate(-20deg); }
-      55% { transform: scale(1.35) rotate(8deg); }
-      100% { transform: scale(1) rotate(0); }
+    .mu-item.is-checked .mu-check {
+      background: var(--c-heading);
+      border-color: var(--c-heading);
+    }
+    .mu-item.is-checked .mu-check .mu-tick {
+      stroke-dashoffset: 0;
     }
     .mu-item-label {
       font-size: 0.78rem;
@@ -1027,6 +1033,100 @@
       text-decoration: underline;
     }
 
+    /* Message d'erreur d'envoi (repli mail) */
+    .form-error {
+      flex-basis: 100%;
+      margin: 8px 0 0;
+      font-size: 0.85rem;
+      color: var(--c-red);
+    }
+    .form-error a {
+      color: var(--c-red);
+      text-decoration: underline;
+    }
+
+    /* ============================================================
+       ANIMATION D'ENVOI « lettre de Noël »
+       Overlay injecté en JS, retiré du DOM à la fin.
+       ============================================================ */
+    #letter-overlay {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 200;
+    }
+    .letter-stage {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      opacity: 0;
+      perspective: 420px;
+    }
+    .letter-env {
+      display: block;
+      filter: drop-shadow(0 8px 16px rgba(26, 44, 94, 0.18));
+    }
+    .env-flap {
+      transform-origin: 60px 19px;
+      transform-box: view-box;
+    }
+    .env-seal {
+      transform-origin: 60px 48px;
+      transform-box: view-box;
+      opacity: 0;
+    }
+    .letter-particles {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 0;
+      height: 0;
+    }
+    .letter-particles span {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--c-gold);
+      opacity: 0;
+      transform: translate(-50%, -50%);
+    }
+
+    /* Case de consentement RGPD */
+    .consent-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      cursor: pointer;
+    }
+    .consent-row input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .consent-row input:checked + .mu-check {
+      background: var(--c-heading);
+      border-color: var(--c-heading);
+    }
+    .consent-row input:checked + .mu-check .mu-tick {
+      stroke-dashoffset: 0;
+    }
+    .consent-row input:focus-visible + .mu-check {
+      outline: 2px solid var(--c-red);
+      outline-offset: 2px;
+    }
+    .consent-text {
+      font-size: 0.82rem;
+      line-height: 1.4;
+      color: var(--c-muted);
+      margin-top: 1px;
+    }
+    .consent-text a {
+      color: var(--c-heading);
+      text-decoration: underline;
+    }
+
     /* ============================================================
        FOOTER Mention Réusit discrète
        Si un logo Réusit est fourni, l'ajouter en petit format ici.
@@ -1154,6 +1254,7 @@
       .gallery-grid {
         grid-template-columns: repeat(2, 1fr);
       }
+      .field-grid { grid-template-columns: 1fr; gap: 18px; }
     }
 
     @media (max-width: 480px) {
@@ -1164,7 +1265,6 @@
       }
       .products-grid { grid-template-columns: 1fr; }
       .values-grid { grid-template-columns: 1fr; }
-      .field-grid { grid-template-columns: 1fr; }
       .hero-cta { padding: 14px 24px; font-size: 14px; }
     }
   </style>
@@ -1579,36 +1679,36 @@
                     <span class="mu-count" aria-hidden="true" hidden>0</span>
                     <svg class="mu-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
                   </button>
-                  <div class="mu-panel" role="listbox" aria-label="Sélection de produits">
+                  <div class="mu-panel" role="group" aria-multiselectable="true" aria-label="Sélection de produits">
                     <div class="mu-items">
                     <label class="mu-item" data-product="medaillon-diorama">
                       <input type="checkbox" name="produits" value="Médaillon « Diorama forestier »">
-                      <span class="mu-star" aria-hidden="true"><svg viewBox="0 0 24 24" width="17" height="17" focusable="false"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span>
+                      <span class="mu-check" aria-hidden="true"><svg viewBox="0 0 18 18"><polyline class="mu-tick" points="4.5,9.6 7.4,12.7 13.6,5.4" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
                       <span class="mu-item-label">Médaillon « Diorama forestier »</span>
                     </label>
                     <label class="mu-item" data-product="etoiles-forestieres">
                       <input type="checkbox" name="produits" value="Étoiles forestières (lot de 4)">
-                      <span class="mu-star" aria-hidden="true"><svg viewBox="0 0 24 24" width="17" height="17" focusable="false"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span>
+                      <span class="mu-check" aria-hidden="true"><svg viewBox="0 0 18 18"><polyline class="mu-tick" points="4.5,9.6 7.4,12.7 13.6,5.4" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
                       <span class="mu-item-label">Étoiles forestières (lot de 4)</span>
                     </label>
                     <label class="mu-item" data-product="support-telephone">
                       <input type="checkbox" name="produits" value="Support téléphone bois &amp; marbre">
-                      <span class="mu-star" aria-hidden="true"><svg viewBox="0 0 24 24" width="17" height="17" focusable="false"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span>
+                      <span class="mu-check" aria-hidden="true"><svg viewBox="0 0 18 18"><polyline class="mu-tick" points="4.5,9.6 7.4,12.7 13.6,5.4" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
                       <span class="mu-item-label">Support téléphone bois &amp; marbre</span>
                     </label>
                     <label class="mu-item" data-product="medaillon-bouteille">
                       <input type="checkbox" name="produits" value="Médaillon « Bouteille &amp; sapin »">
-                      <span class="mu-star" aria-hidden="true"><svg viewBox="0 0 24 24" width="17" height="17" focusable="false"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span>
+                      <span class="mu-check" aria-hidden="true"><svg viewBox="0 0 18 18"><polyline class="mu-tick" points="4.5,9.6 7.4,12.7 13.6,5.4" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
                       <span class="mu-item-label">Médaillon « Bouteille &amp; sapin »</span>
                     </label>
                     <label class="mu-item" data-product="collection-medaillons">
                       <input type="checkbox" name="produits" value="Collection médaillons alsaciens">
-                      <span class="mu-star" aria-hidden="true"><svg viewBox="0 0 24 24" width="17" height="17" focusable="false"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span>
+                      <span class="mu-check" aria-hidden="true"><svg viewBox="0 0 18 18"><polyline class="mu-tick" points="4.5,9.6 7.4,12.7 13.6,5.4" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
                       <span class="mu-item-label">Collection médaillons alsaciens</span>
                     </label>
                     <label class="mu-item" data-product="coeur-frohe-weihnachten">
                       <input type="checkbox" name="produits" value="Cœur « Frohe Weihnachten »">
-                      <span class="mu-star" aria-hidden="true"><svg viewBox="0 0 24 24" width="17" height="17" focusable="false"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span>
+                      <span class="mu-check" aria-hidden="true"><svg viewBox="0 0 18 18"><polyline class="mu-tick" points="4.5,9.6 7.4,12.7 13.6,5.4" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
                       <span class="mu-item-label">Cœur « Frohe Weihnachten »</span>
                     </label>
                     </div>
@@ -1650,6 +1750,12 @@
                 <h3 class="form-part-title">Message <span class="opt">(optionnel)</span></h3>
                 <textarea id="f-message" name="message" placeholder="Date de livraison, budget, personnalisation…"></textarea>
               </div>
+
+              <label class="consent-row">
+                <input type="checkbox" name="consentement" value="Lu et accepté" required>
+                <span class="mu-check" aria-hidden="true"><svg viewBox="0 0 18 18"><polyline class="mu-tick" points="4.5,9.6 7.4,12.7 13.6,5.4" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                <span class="consent-text">J'accepte que Réusit traite mes données pour répondre à ma demande de devis.</span>
+              </label>
 
               <div class="form-actions">
                 <button type="submit" class="submit-btn">
@@ -1704,6 +1810,9 @@
   <script>
     (function() {
       'use strict';
+
+      // Détection prefers-reduced-motion (utilisé par l'envoi + scroll reveal)
+      var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
       // ============================================================
       // PERSONNALISATION par paramètre d'URL : ?nom=Nom%20Entreprise
@@ -1853,8 +1962,215 @@
         });
       });
 
-      // Détection de prefers-reduced-motion
-      var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      // ============================================================
+      // ENVOI DU FORMULAIRE : animation « lettre de Noël » + POST Netlify
+      // - preventDefault + validation native (reportValidity)
+      // - POST fetch vers '/' (form-name + honeypot sont dans le payload)
+      // - Promise.all(anim + fetch) -> masque le form + affiche #devis-success (role=status, focus)
+      // - En cas d'echec : bouton réactivé + message discret avec mail de repli
+      // - Le chemin ?merci=1 (filet de sécurité sans JS) reste intact plus haut
+      // ============================================================
+      (function() {
+        var formEl = document.getElementById('devis-form');
+        if (!formEl || typeof formEl.reportValidity !== 'function') return;
+
+        formEl.addEventListener('submit', function(e) {
+          e.preventDefault();
+          if (!formEl.reportValidity()) return;
+
+          var btn = formEl.querySelector('.submit-btn');
+          if (btn) btn.disabled = true;
+          var reduced = prefersReducedMotion;
+          var successEl = document.getElementById('devis-success');
+
+          function showSuccess() {
+            formEl.style.display = 'none';
+            if (successEl) {
+              successEl.hidden = false;
+              successEl.setAttribute('role', 'status');
+              successEl.setAttribute('tabindex', '-1');
+              successEl.focus();
+            }
+          }
+
+          function showError() {
+            if (btn) btn.disabled = false;
+            if (formEl.querySelector('.form-error')) return;
+            var actions = formEl.querySelector('.form-actions');
+            if (!actions) return;
+            var msg = document.createElement('p');
+            msg.className = 'form-error';
+            msg.textContent = 'Envoi impossible pour l\u2019instant. \u00c9crivez-nous \u00e0 ';
+            var link = document.createElement('a');
+            link.href = 'mailto:nicolas@reusit.fr';
+            link.textContent = 'nicolas@reusit.fr';
+            msg.appendChild(link);
+            msg.appendChild(document.createTextNode('.'));
+            actions.appendChild(msg);
+          }
+
+          // En local (file:// ou localhost sans backend Netlify) on simule l'envoi
+          // pour pouvoir tester l'animation. En production, fetch réel vers Netlify.
+          var isLocal = location.protocol === 'file:' ||
+            location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+
+          var fetchP = isLocal
+            ? new Promise(function(resolve) { setTimeout(resolve, 900); })
+            : fetch('/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams(new FormData(formEl)).toString()
+              }).then(function(res) {
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+              });
+
+          // Sans animation (préférence reduced-motion ou WAAPI absent) : envoi direct
+          if (reduced || !('animate' in Element.prototype)) {
+            fetchP.then(showSuccess).catch(showError);
+            return;
+          }
+
+          var animP = btn ? playLetterAnim(btn) : Promise.resolve();
+          Promise.all([animP, fetchP])
+            .then(showSuccess)
+            .catch(function() {
+              var ov = document.getElementById('letter-overlay');
+              if (ov && ov.parentNode) ov.parentNode.removeChild(ov);
+              showError();
+            });
+        });
+      })();
+
+      // Animation « lettre de Noël » — enveloppe + cachet + particules dorées (~1,45 s)
+      function playLetterAnim(btn) {
+        return new Promise(function(resolve) {
+          var r = btn.getBoundingClientRect();
+          var cx = r.left + r.width / 2;
+          var cy = r.top + r.height / 2;
+
+          var ov = document.createElement('div');
+          ov.id = 'letter-overlay';
+          ov.setAttribute('aria-hidden', 'true');
+
+          var stage = document.createElement('div');
+          stage.className = 'letter-stage';
+          stage.style.left = cx + 'px';
+          stage.style.top = cy + 'px';
+
+          var NS = 'http://www.w3.org/2000/svg';
+          var env = document.createElementNS(NS, 'svg');
+          env.setAttribute('class', 'letter-env');
+          env.setAttribute('viewBox', '0 0 120 86');
+          env.setAttribute('width', '120');
+          env.setAttribute('height', '86');
+
+          var body = document.createElementNS(NS, 'rect');
+          body.setAttribute('x', '4');
+          body.setAttribute('y', '19');
+          body.setAttribute('width', '112');
+          body.setAttribute('height', '63');
+          body.setAttribute('rx', '5');
+          body.setAttribute('fill', '#FAF7F1');
+          body.setAttribute('stroke', '#D9CFB8');
+          body.setAttribute('stroke-width', '1.6');
+          env.appendChild(body);
+
+          var flap = document.createElementNS(NS, 'g');
+          flap.setAttribute('class', 'env-flap');
+          var flapPath = document.createElementNS(NS, 'path');
+          flapPath.setAttribute('d', 'M4 20 L60 5 L116 20');
+          flapPath.setAttribute('fill', '#F1E8D3');
+          flapPath.setAttribute('stroke', '#D9CFB8');
+          flapPath.setAttribute('stroke-width', '1.6');
+          flapPath.setAttribute('stroke-linejoin', 'round');
+          flap.appendChild(flapPath);
+          env.appendChild(flap);
+
+          var seal = document.createElementNS(NS, 'g');
+          seal.setAttribute('class', 'env-seal');
+          var sealDisc = document.createElementNS(NS, 'circle');
+          sealDisc.setAttribute('cx', '60');
+          sealDisc.setAttribute('cy', '48');
+          sealDisc.setAttribute('r', '12');
+          sealDisc.setAttribute('fill', '#D32F2F');
+          sealDisc.setAttribute('stroke', '#C5A059');
+          sealDisc.setAttribute('stroke-width', '1.5');
+          seal.appendChild(sealDisc);
+          var sealInner = document.createElementNS(NS, 'circle');
+          sealInner.setAttribute('cx', '60');
+          sealInner.setAttribute('cy', '48');
+          sealInner.setAttribute('r', '3.6');
+          sealInner.setAttribute('fill', '#9E1F1F');
+          seal.appendChild(sealInner);
+          env.appendChild(seal);
+
+          var parts = document.createElement('div');
+          parts.className = 'letter-particles';
+          var partEls = [];
+          var NPART = 7;
+          for (var i = 0; i < NPART; i++) {
+            var s = document.createElement('span');
+            parts.appendChild(s);
+            partEls.push(s);
+          }
+
+          stage.appendChild(env);
+          stage.appendChild(parts);
+          ov.appendChild(stage);
+          document.body.appendChild(ov);
+
+          function cleanup() {
+            if (ov.parentNode) ov.parentNode.removeChild(ov);
+            resolve();
+          }
+
+          // Phase A (0-250ms) : l'enveloppe apparaît, centrée sur le bouton
+          stage.animate(
+            [
+              { transform: 'translate(-50%, -50%) scale(0.9)', opacity: 0 },
+              { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 }
+            ],
+            { duration: 250, easing: 'ease-out', fill: 'forwards' }
+          );
+
+          // Phase B (250-500ms) : le rabat se ferme, le cachet de cire apparaît
+          setTimeout(function() {
+            flap.animate(
+              [{ transform: 'rotateX(0deg)' }, { transform: 'rotateX(180deg)' }],
+              { duration: 250, easing: 'ease-in', fill: 'forwards' }
+            );
+            seal.animate(
+              [{ transform: 'scale(0)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }],
+              { duration: 230, easing: 'cubic-bezier(0.34,1.56,0.64,1)', fill: 'forwards' }
+            );
+          }, 250);
+
+          // Phase C (500-1400ms) : départ en diagonale haut-droite + particules dorées
+          setTimeout(function() {
+            var dx = 230, dy = -190;
+            stage.animate(
+              [
+                { transform: 'translate(-50%, -50%) scale(1) rotate(0deg)', opacity: 1 },
+                { transform: 'translate(calc(-50% + ' + dx + 'px), calc(-50% + ' + dy + 'px)) scale(0.3) rotate(-12deg)', opacity: 0 }
+              ],
+              { duration: 900, easing: 'cubic-bezier(0.5, 0, 0.75, 0)', fill: 'forwards' }
+            );
+            partEls.forEach(function(el, idx) {
+              var spread = (Math.random() * 44 - 22);
+              el.animate(
+                [
+                  { transform: 'translate(-50%, -50%) translate(0, 0)', opacity: 0 },
+                  { opacity: 0.5, offset: 0.25 },
+                  { transform: 'translate(-50%, -50%) translate(' + spread + 'px, -95px)', opacity: 0 }
+                ],
+                { duration: 900, delay: idx * 45, easing: 'ease-out', fill: 'forwards' }
+              );
+            });
+          }, 500);
+
+          setTimeout(cleanup, 1450);
+        });
+      }
 
       // État "scrolled" du header (ombre + opacité)
       var header = document.querySelector('.site-header');
