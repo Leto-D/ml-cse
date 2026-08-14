@@ -1,0 +1,51 @@
+---
+import type { Product } from '~/types';
+import Icon from './Icon.astro';
+import CheckMark from './CheckMark.astro';
+
+interface Props {
+  /** Libellé au repos, réutilisé quand plus rien n'est coché. */
+  label: string;
+  /** Nom du champ envoyé à Netlify (une entrée par case cochée). */
+  name: string;
+  items: Product[];
+}
+
+const { label, name, items } = Astro.props;
+---
+
+<div class="mu-select" data-multiselect data-label={label}>
+  <button type="button" class="mu-btn" aria-expanded="false">
+    <span class="mu-label">{label}</span>
+    <span class="mu-count" aria-hidden="true" hidden>0</span>
+    <Icon name="chevron-down" class="mu-chevron" />
+  </button>
+
+  <div
+    class="mu-panel"
+    role="group"
+    aria-multiselectable="true"
+    aria-label="Sélection de produits"
+  >
+    <div class="mu-items">
+      {
+        items.map((item) => (
+          <label class="mu-item" data-product={item.slug}>
+            <input type="checkbox" name={name} value={item.name} />
+            <CheckMark />
+            <span class="mu-item-label">{item.name}</span>
+          </label>
+        ))
+      }
+    </div>
+    <div class="mu-footer">
+      <span class="mu-foot-count">Aucune sélection</span>
+      <button type="button" class="mu-clear">Effacer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  import { initMultiSelects } from '~/scripts/multiselect';
+  initMultiSelects();
+</script>

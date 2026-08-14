@@ -1,0 +1,24 @@
+---
+/**
+ * Trois points — accent, doré, marine.
+ * `variant="separator"` l'encadre de deux filets, pour ouvrir une section.
+ */
+interface Props {
+  variant?: 'bare' | 'separator';
+  class?: string;
+}
+
+const { variant = 'bare', class: className } = Astro.props;
+---
+
+{
+  variant === 'separator' ? (
+    <div class:list={['section-separator', className]} aria-hidden="true">
+      <span class="ornament"><span /><span /><span /></span>
+    </div>
+  ) : (
+    <span class:list={['ornament', className]} aria-hidden="true">
+      <span /><span /><span />
+    </span>
+  )
+}

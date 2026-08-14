@@ -1,0 +1,34 @@
+---
+import type { Client } from '~/types';
+import Ornament from './Ornament.astro';
+import SectionHeader from './SectionHeader.astro';
+import ProductCard from './ProductCard.astro';
+
+interface Props {
+  client: Client;
+}
+
+const { client } = Astro.props;
+const { products } = client;
+---
+
+<section id="produits" aria-labelledby="produits-title">
+  <div class="container">
+    <Ornament variant="separator" />
+
+    <SectionHeader
+      eyebrow={products.eyebrow}
+      title={products.title}
+      intro={products.intro}
+      titleId="produits-title"
+    />
+
+    <div class="products-grid stagger" role="list">
+      {
+        products.items.map((product, i) => (
+          <ProductCard product={product} index={i} />
+        ))
+      }
+    </div>
+  </div>
+</section>
