@@ -26,30 +26,36 @@
     {/* Ombre portée au sol, pour poser l'objet */}
     <ellipse class="gift-shadow" cx="120" cy="243" rx="74" ry="10" />
 
-    {/* Corps du coffret */}
+    {/*
+      Corps et couvercle se touchent sans se recouvrir : le couvercle occupe
+      68→108, le corps reprend exactement à 108. Aucune surface n'est peinte
+      deux fois. Un recouvrement, même d'une unité, scintille pendant le
+      mouvement, les deux couches étant ré-échantillonnées à chaque image.
+      Le ruban reste continu, y compris quand le couvercle s'envole.
+    */}
     <g class="gift-body">
       <rect x="38" y="108" width="164" height="128" rx="8" fill="url(#gift-body)" />
       {/* Ruban vertical */}
-      <rect x="107" y="108" width="26" height="128" fill="var(--c-gold)" opacity="0.95" />
+      <rect x="107" y="108" width="26" height="128" fill="var(--c-gold)" />
       {/* Reflet doux sur la face */}
       <rect x="38" y="108" width="164" height="128" rx="8" fill="#fff" opacity="0.06" />
     </g>
 
     {/* Couvercle : c'est lui qui se soulève */}
     <g class="gift-lid">
-      <rect x="26" y="76" width="188" height="40" rx="7" fill="url(#gift-lid)" />
-      <rect x="107" y="76" width="26" height="40" fill="var(--c-gold)" />
+      <rect x="26" y="68" width="188" height="40" rx="7" fill="url(#gift-lid)" />
+      <rect x="107" y="68" width="26" height="40" fill="var(--c-gold)" />
       {/* Nœud : deux boucles et un centre */}
       <g class="gift-bow">
         <path
-          d="M120 78 C 96 78, 82 58, 92 46 C 102 35, 118 52, 120 76 Z"
+          d="M120 70 C 96 70, 82 50, 92 38 C 102 27, 118 44, 120 68 Z"
           fill="var(--c-gold)"
         />
         <path
-          d="M120 78 C 144 78, 158 58, 148 46 C 138 35, 122 52, 120 76 Z"
+          d="M120 70 C 144 70, 158 50, 148 38 C 138 27, 122 44, 120 68 Z"
           fill="var(--c-gold)"
         />
-        <circle cx="120" cy="76" r="9" fill="#D9B36B" />
+        <circle cx="120" cy="68" r="9" fill="#D9B36B" />
       </g>
     </g>
   </svg>
