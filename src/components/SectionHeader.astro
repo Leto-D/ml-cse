@@ -1,0 +1,17 @@
+---
+interface Props {
+  eyebrow: string;
+  title: string;
+  intro?: string;
+  /** Id posé sur le <h2>, référencé par aria-labelledby de la section. */
+  titleId?: string;
+}
+
+const { eyebrow, title, intro, titleId } = Astro.props;
+---
+
+<div class="section-header reveal">
+  <div class="section-eyebrow">{eyebrow}</div>
+  <h2 id={titleId}>{title}</h2>
+  {intro && <p>{intro}</p>}
+</div>

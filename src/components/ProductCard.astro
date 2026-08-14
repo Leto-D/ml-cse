@@ -1,0 +1,41 @@
+---
+import { Picture } from 'astro:assets';
+import type { Product } from '~/types';
+import Icon from './Icon.astro';
+
+interface Props {
+  product: Product;
+  /** Rang dans la grille : pilote le délai d'apparition en cascade. */
+  index: number;
+}
+
+const { product, index } = Astro.props;
+---
+
+<article class="product-card" role="listitem" style={`--i:${index}`}>
+  <div class="product-image">
+    <Picture
+      src={product.image}
+      formats={['avif', 'webp']}
+      widths={[400, 640, 900]}
+      sizes="(max-width: 480px) 92vw, (max-width: 900px) 45vw, 380px"
+      alt={product.alt}
+      loading="lazy"
+      decoding="async"
+    />
+    {product.tag && <span class="product-tag">{product.tag}</span>}
+  </div>
+
+  <div class="product-body">
+    <h3 class="product-name">{product.name}</h3>
+    <p class="product-desc">{product.description}</p>
+    <p class="product-provenance">
+      <Icon name="shield" size={14} />
+      {product.provenance}
+    </p>
+    <a href="#devis" class="product-cta" data-select-product={product.slug}>
+      Demander un devis
+      <Icon name="arrow-right" />
+    </a>
+  </div>
+</article>

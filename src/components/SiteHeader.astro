@@ -1,0 +1,33 @@
+---
+import type { Client } from '~/types';
+
+interface Props {
+  client: Client;
+}
+
+const { client } = Astro.props;
+const { header } = client;
+---
+
+<header class="site-header" id="top">
+  <div class="header-inner">
+    <a href="#top" class="logo-wrap" aria-label="Retour en haut de page">
+      <span class="brand-name" data-brand>{header.brand}</span>
+    </a>
+    <div class="header-tag">
+      {header.tagline}
+      <strong>{header.edition}</strong>
+    </div>
+  </div>
+</header>
+
+<script>
+  // État "scrolled" : ombre + fond plus opaque dès qu'on quitte le haut de page.
+  const header = document.querySelector<HTMLElement>('.site-header');
+  if (header) {
+    const onScroll = () =>
+      header.classList.toggle('is-scrolled', window.scrollY > 20);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  }
+</script>

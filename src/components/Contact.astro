@@ -1,0 +1,52 @@
+---
+import type { Client } from '~/types';
+import Ornament from './Ornament.astro';
+import QuoteForm from './QuoteForm.astro';
+
+interface Props {
+  client: Client;
+}
+
+const { client } = Astro.props;
+const { contact } = client;
+---
+
+<section class="contact-section" aria-labelledby="contact-title" id="contact">
+  <div class="container">
+    <Ornament variant="separator" />
+
+    <div class="contact-inner reveal">
+      <div class="section-eyebrow">{contact.eyebrow}</div>
+      <h2 id="contact-title" data-contact-title>{contact.title}</h2>
+      <p class="intro">{contact.intro}</p>
+    </div>
+
+    <div class="contact-grid">
+      <aside class="contact-steps reveal">
+        <p class="contact-lead">{contact.lead}</p>
+
+        <div class="reassurance">
+          {
+            contact.reassurance.map((item, i) => (
+              <>
+                {i > 0 && <i aria-hidden="true" />}
+                <span>{item}</span>
+              </>
+            ))
+          }
+        </div>
+
+        <div class="contact-details">
+          <p>
+            <strong>{contact.person.name}</strong>
+            <span>{contact.person.role}</span>
+          </p>
+          <p><a href={`mailto:${contact.person.email}`}>{contact.person.email}</a></p>
+          <p><a href={`tel:${contact.person.phoneHref}`}>{contact.person.phone}</a></p>
+        </div>
+      </aside>
+
+      <QuoteForm client={client} />
+    </div>
+  </div>
+</section>

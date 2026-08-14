@@ -1,0 +1,146 @@
+---
+import type { Client } from '~/types';
+import Icon from './Icon.astro';
+import CheckMark from './CheckMark.astro';
+import MultiSelect from './MultiSelect.astro';
+
+interface Props {
+  client: Client;
+}
+
+const { client } = Astro.props;
+const { form, products, contact } = client;
+---
+
+<div class="contact-form-wrap reveal" id="devis">
+  {/*
+    Netlify détecte ce <form> dans le HTML statique produit au build.
+    `action` sert de repli sans JavaScript : rechargement avec ?merci=1.
+  */}
+  <form
+    name={form.netlifyName}
+    method="POST"
+    data-netlify="true"
+    netlify-honeypot="bot-field"
+    action="/?merci=1#devis"
+    class="devis-form"
+    id="devis-form"
+  >
+    <input type="hidden" name="form-name" value={form.netlifyName} />
+    <p class="hp-field" aria-hidden="true">
+      <label>
+        Ne pas remplir ce champ
+        <input type="text" name="bot-field" tabindex="-1" autocomplete="off" />
+      </label>
+    </p>
+
+    <div class="form-part">
+      <h3 class="form-part-title">Vos objets</h3>
+      <MultiSelect label="Vos objets" name="produits" items={products.items} />
+    </div>
+
+    <div class="form-part">
+      <h3 class="form-part-title">Vos coordonnées</h3>
+      <div class="field-grid">
+        <div class="field">
+          <label for="f-quantite">Quantité estimée</label>
+          <div class="stepper">
+            <button
+              type="button"
+              class="stepper-btn"
+              data-step="-1"
+              aria-label="Diminuer la quantité">−</button
+            >
+            <input
+              type="number"
+              id="f-quantite"
+              name="quantite"
+              min="1"
+              value={form.quantityDefault}
+              inputmode="numeric"
+            />
+            <button
+              type="button"
+              class="stepper-btn"
+              data-step="1"
+              aria-label="Augmenter la quantité">+</button
+            >
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="f-entreprise">Entreprise</label>
+          <input
+            type="text"
+            id="f-entreprise"
+            name="entreprise"
+            placeholder="Nom de votre société"
+            autocomplete="organization"
+          />
+        </div>
+
+        <div class="field">
+          <label for="f-nom">Votre nom</label>
+          <input
+            type="text"
+            id="f-nom"
+            name="nom"
+            placeholder="Prénom et nom"
+            autocomplete="name"
+            required
+          />
+        </div>
+
+        <div class="field">
+          <label for="f-email">Email</label>
+          <input
+            type="email"
+            id="f-email"
+            name="email"
+            placeholder="vous@entreprise.fr"
+            autocomplete="email"
+            required
+          />
+        </div>
+      </div>
+    </div>
+
+    <div class="form-part">
+      <h3 class="form-part-title">
+        Message <span class="opt">(optionnel)</span>
+      </h3>
+      <textarea
+        id="f-message"
+        name="message"
+        placeholder="Date de livraison, budget, personnalisation…"></textarea>
+    </div>
+
+    <label class="consent-row">
+      <input type="checkbox" name="consentement" value="Lu et accepté" required />
+      <CheckMark />
+      <span class="consent-text">{form.consent}</span>
+    </label>
+
+    <div class="form-actions">
+      <button type="submit" class="pill-btn submit-btn">
+        {form.submit}
+        <Icon name="arrow-right" />
+      </button>
+      <p class="form-actions-note">{form.note}</p>
+    </div>
+  </form>
+
+  <div class="devis-success" id="devis-success" hidden>
+    <div class="section-eyebrow">{form.success.eyebrow}</div>
+    <h2>{form.success.title}</h2>
+    <p class="intro">
+      {form.success.text}
+      <a href={`mailto:${contact.person.email}`}>{contact.person.email}</a>.
+    </p>
+  </div>
+</div>
+
+<script>
+  import { initQuoteForm } from '~/scripts/quote-form';
+  initQuoteForm();
+</script>

@@ -1,0 +1,22 @@
+---
+import type { Client } from '~/types';
+
+interface Props {
+  client: Client;
+}
+
+const { footer } = Astro.props.client;
+---
+
+<footer class="site-footer">
+  <div class="container">
+    <p class="footer-credit">
+      Conçu et fabriqué par
+      <strong>{footer.agency}</strong>
+      <span class="dot-sep" aria-hidden="true"></span>
+      <span data-footer-line>{footer.line}</span>
+      <span class="dot-sep" aria-hidden="true"></span>
+      <span>{footer.year}</span>
+    </p>
+  </div>
+</footer>

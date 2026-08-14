@@ -1,0 +1,26 @@
+---
+import type { Client } from '~/types';
+import Icon from './Icon.astro';
+
+interface Props {
+  client: Client;
+}
+
+const { client } = Astro.props;
+---
+
+<section class="values-section" aria-label="Nos engagements">
+  <div class="container">
+    <div class="values-grid stagger">
+      {
+        client.values.map((value, i) => (
+          <div class="value-item" style={`--i:${i}`}>
+            <Icon name={value.icon} size={22} />
+            <h3>{value.title}</h3>
+            <p>{value.text}</p>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>

@@ -1,0 +1,45 @@
+---
+import type { Client } from '~/types';
+import '~/styles/global.css';
+
+interface Props {
+  client: Client;
+}
+
+const { client } = Astro.props;
+const { palette, meta } = client;
+---
+
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{meta.title}</title>
+    <meta name="description" content={meta.description} />
+    <meta name="generator" content={Astro.generator} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={meta.title} />
+    <meta property="og:description" content={meta.description} />
+    <meta property="og:locale" content="fr_FR" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    {/* La palette du client devient des variables CSS : un seul point d'injection. */}
+    <style
+      is:inline
+      set:html={`:root{--c-heading:${palette.heading};--c-accent:${palette.accent};--c-accent-dark:${palette.accentDark};--c-gold:${palette.gold};--c-bg:${palette.bg};--c-surface:${palette.surface};}`}
+    />
+  </head>
+
+  <body>
+    <a href="#main" class="skip-link">Aller au contenu principal</a>
+    <slot />
+  </body>
+</html>

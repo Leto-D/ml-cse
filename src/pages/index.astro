@@ -1,0 +1,43 @@
+---
+import { activeClient } from '~/clients';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import SiteHeader from '~/components/SiteHeader.astro';
+import Hero from '~/components/Hero.astro';
+import Products from '~/components/Products.astro';
+import Gallery from '~/components/Gallery.astro';
+import Values from '~/components/Values.astro';
+import Contact from '~/components/Contact.astro';
+import SiteFooter from '~/components/SiteFooter.astro';
+
+const client = activeClient;
+---
+
+<BaseLayout client={client}>
+  <SiteHeader client={client} />
+
+  <main id="main">
+    <Hero client={client} />
+    <Products client={client} />
+    <Gallery client={client} />
+    <Values client={client} />
+    <Contact client={client} />
+  </main>
+
+  <SiteFooter client={client} />
+</BaseLayout>
+
+{/* Gabarits de personnalisation sérialisés au build, lus par le script client. */}
+<script
+  is:inline
+  type="application/json"
+  id="personalization-data"
+  set:html={JSON.stringify(client.personalization)}
+/>
+
+<script>
+  import { initMotion } from '~/scripts/reveal';
+  import { initPersonalization } from '~/scripts/personalize';
+
+  initMotion();
+  initPersonalization();
+</script>

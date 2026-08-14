@@ -1,0 +1,46 @@
+---
+import { Picture } from 'astro:assets';
+import type { Client } from '~/types';
+import SectionHeader from './SectionHeader.astro';
+
+interface Props {
+  client: Client;
+}
+
+const { client } = Astro.props;
+const { gallery } = client;
+---
+
+<section id="galerie" aria-labelledby="galerie-title">
+  <div class="container">
+    <SectionHeader
+      eyebrow={gallery.eyebrow}
+      title={gallery.title}
+      intro={gallery.intro}
+      titleId="galerie-title"
+    />
+
+    <div class="gallery-grid stagger">
+      {
+        gallery.photos.map((photo, i) => (
+          // La première photo occupe un bloc 2×2 : elle demande plus de résolution.
+          <figure class="gallery-item" style={`--i:${i}`}>
+            <Picture
+              src={photo.image}
+              formats={['avif', 'webp']}
+              widths={i === 0 ? [560, 900, 1200] : [280, 440, 640]}
+              sizes={
+                i === 0
+                  ? '(max-width: 768px) 48vw, (max-width: 900px) 32vw, 570px'
+                  : '(max-width: 768px) 48vw, (max-width: 900px) 32vw, 285px'
+              }
+              alt={photo.alt}
+              loading="lazy"
+              decoding="async"
+            />
+          </figure>
+        ))
+      }
+    </div>
+  </div>
+</section>

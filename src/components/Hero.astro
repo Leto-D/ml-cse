@@ -1,0 +1,33 @@
+---
+import type { Client } from '~/types';
+import Icon from './Icon.astro';
+import Ornament from './Ornament.astro';
+
+interface Props {
+  client: Client;
+}
+
+const { client } = Astro.props;
+const { hero } = client;
+---
+
+<section class="hero" aria-labelledby="hero-title">
+  <div class="container">
+    <div class="hero-content">
+      <span class="hero-eyebrow">{hero.eyebrow}</span>
+      <h1 id="hero-title">
+        <span data-hero-lead>{hero.titleLead}</span><br />
+        <span data-hero-join>{hero.titleJoin}</span><span
+          class="accent"
+          data-hero-accent>{hero.titleAccent}</span
+        >
+      </h1>
+      <p class="hero-subtitle">{hero.subtitle}</p>
+      <a href="#produits" class="pill-btn">
+        {hero.cta}
+        <Icon name="arrow-down" />
+      </a>
+    </div>
+  </div>
+  <Ornament class="hero-deco" />
+</section>
