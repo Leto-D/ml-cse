@@ -41,7 +41,7 @@ function initProductLinks() {
     });
 }
 
-/** Repli sans JavaScript : Netlify renvoie sur /?merci=1 après le POST natif. */
+/** Repli sans JavaScript : Netlify renvoie sur ?merci=1 après le POST natif. */
 function initSuccessFromQuery() {
   if (new URLSearchParams(window.location.search).get('merci') !== '1') return;
   const form = document.getElementById('devis-form');
@@ -108,7 +108,7 @@ function initSubmit() {
 
     const sent = isLocal
       ? new Promise<void>((resolve) => window.setTimeout(resolve, 900))
-      : fetch('/', {
+      : fetch(import.meta.env.BASE_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: new URLSearchParams(

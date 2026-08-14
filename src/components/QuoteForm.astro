@@ -22,7 +22,7 @@ const { form, products, contact } = client;
     method="POST"
     data-netlify="true"
     netlify-honeypot="bot-field"
-    action="/?merci=1#devis"
+    action={`${import.meta.env.BASE_URL}?merci=1#devis`}
     class="devis-form"
     id="devis-form"
   >
