@@ -1,22 +1,22 @@
 /**
  * Coffret du hero : ouverture au défilement.
  *
- * L'ouverture est calée sur l'arrivée du titre de la section suivante, pas sur
- * un pourcentage du hero : c'est lui que les confettis vont dessiner, il doit
- * donc être à l'écran au moment où ils se posent. Le coffret, lui, est encore
- * visible à cet instant sur toutes les tailles d'écran.
+ * Dès les premiers pixels de défilement, le couvercle se soulève et libère une
+ * gerbe qui se rassemble en boule de Noël. La boule se compose à une position
+ * d'écran fixe, donc toujours visible ; puis, quand elle se défait, la page
+ * glisse doucement vers la section suivante, comme si l'animation y conduisait.
  *
- * La gerbe et sa recomposition en titre sont confiées à confetti-morph.
- * Revenir tout en haut réarme l'animation.
+ * Revenir tout en haut réarme la séquence.
  */
 
-import { playConfettiMorph } from './confetti-morph';
+import { playConfettiBauble } from './confetti-bauble';
+import { assistScroll } from './scroll-assist';
 
-/** Le titre doit avoir franchi cette fraction de la hauteur d'écran. */
-const TRIGGER_VIEWPORT_RATIO = 0.85;
-
-/** Repli si le titre est introuvable : proportion du hero défilée. */
-const FALLBACK_HERO_RATIO = 0.16;
+/**
+ * Proportion du hero défilée avant l'ouverture. Volontairement basse : le
+ * coffret doit encore être bien à l'écran quand la gerbe en sort.
+ */
+const TRIGGER_RATIO = 0.12;
 
 export function initGiftBox(): void {
   const gift = document.querySelector<HTMLElement>('[data-gift]');
@@ -31,43 +31,37 @@ export function initGiftBox(): void {
   }
 
   const header = document.querySelector<HTMLElement>('#produits .section-header');
-  const eyebrow = header?.querySelector<HTMLElement>('.section-eyebrow') ?? null;
-  const title = header?.querySelector<HTMLElement>('h2') ?? null;
-
   let opened = false;
 
-  const shouldOpen = () => {
-    if (header) {
-      return header.getBoundingClientRect().top < window.innerHeight * TRIGGER_VIEWPORT_RATIO;
-    }
-    return window.scrollY / Math.max(hero.offsetHeight, 1) > FALLBACK_HERO_RATIO;
-  };
-
-  const release = () => {
-    if (!header || !eyebrow || !title) return;
-
-    const rect = gift.getBoundingClientRect();
-    // Si le coffret a quitté l'écran, la gerbe part du haut : les confettis
-    // semblent alors tomber de plus haut, ce qui reste cohérent.
-    const origin =
-      rect.bottom > 0 && rect.top < window.innerHeight
-        ? rect
-        : new DOMRect(window.innerWidth / 2, 0, 0, 0);
-
-    // Les cibles sont relevées sur le texte rendu : tant que Playfair et Inter
-    // ne sont pas chargées, les glyphes mesurés seraient ceux des polices de
-    // repli et les lettres tomberaient à côté.
-    const start = () => playConfettiMorph(origin, header, [eyebrow, title]);
-    if (document.fonts?.status === 'loaded') start();
-    else document.fonts.ready.then(start);
+  /** Amène la section suivante sous le titre, sans jamais remonter la page. */
+  const glideToProducts = () => {
+    if (!header) return;
+    const target = window.scrollY + header.getBoundingClientRect().top - 120;
+    if (target > window.scrollY) assistScroll(target, 1100);
   };
 
   const onScroll = () => {
-    if (!opened && shouldOpen()) {
+    if (!opened && window.scrollY / Math.max(hero.offsetHeight, 1) > TRIGGER_RATIO) {
       opened = true;
       gift.classList.add('is-open');
-      // Laisse le couvercle se soulever avant de libérer les confettis.
-      window.setTimeout(release, 260);
+
+      // Laisse le couvercle se soulever avant de libérer la gerbe.
+      window.setTimeout(() => {
+        const rect = gift.getBoundingClientRect();
+        const onScreen = rect.bottom > 0 && rect.top < window.innerHeight;
+        const origin = onScreen
+          ? rect
+          : new DOMRect(window.innerWidth / 2, 0, 0, 0);
+
+        // La boule se compose à l'emplacement du coffret, pas au centre de
+        // l'écran : elle semble sortir de la boîte, et surtout elle ne vient
+        // pas se poser sur le titre ni sur le bouton quand tout est empilé.
+        const center = onScreen
+          ? { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }
+          : { x: window.innerWidth / 2, y: window.innerHeight * 0.4 };
+
+        playConfettiBauble(origin, { center, onDissolve: glideToProducts });
+      }, 300);
       return;
     }
 
