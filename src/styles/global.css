@@ -11,7 +11,7 @@
   --c-border-strong: #D9CFB8;
   --c-placeholder: #B7AE9E;
 
-  /* Échelle d'espacement — ratio 1.5, une seule source de vérité */
+  /* Échelle d'espacement : ratio 1.5, une seule source de vérité */
   --sp-1: 4px;
   --sp-2: 8px;
   --sp-3: 12px;
@@ -327,7 +327,7 @@ section {
   line-height: 1.7;
 }
 
-/* Bouton pilule — partagé hero / formulaire */
+/* Bouton pilule : partagé hero / formulaire */
 .pill-btn {
   display: inline-flex;
   align-items: center;
@@ -893,7 +893,7 @@ section {
   color: var(--c-heading);
 }
 
-/* Case à cocher — marqueur sobre partagé (liste + consentement) */
+/* Case à cocher : marqueur sobre partagé (liste + consentement) */
 .mu-check {
   width: 18px;
   height: 18px;

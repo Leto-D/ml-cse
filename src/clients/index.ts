@@ -8,7 +8,7 @@ import { alsaceLait } from './alsace-lait';
  * celle qui est construite par `src/pages/index.astro`.
  *
  * Pour basculer sur un autre client : ajouter sa config au registre, puis
- * changer la constante ci-dessous — ou définir CLIENT=<id> dans l'environnement
+ * changer la constante ci-dessous, ou définir CLIENT=<id> dans l'environnement
  * de build Netlify pour déployer plusieurs sites depuis le même dépôt.
  */
 export const clients = {

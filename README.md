@@ -1,4 +1,4 @@
-# Landing cadeaux d'entreprise — Réusit
+# Landing cadeaux d'entreprise · Réusit
 
 Template de landing page pour la collection de cadeaux d'entreprise Réusit.
 Construit avec [Astro](https://astro.build) en sortie statique, déployé sur Netlify.

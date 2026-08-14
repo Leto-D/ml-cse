@@ -8,7 +8,7 @@ import collectionMedaillons from '~/assets/galerie-5.jpg';
 import coeurAlsacien from '~/assets/galerie-6.jpg';
 
 /**
- * Landing Alsace Lait — collection de Noël.
+ * Landing Alsace Lait : collection de Noël.
  *
  * Pour créer la landing d'un autre client : copier ce fichier, changer les
  * textes, les images et `palette.accent`, puis pointer src/clients/index.ts
@@ -28,7 +28,7 @@ export const alsaceLait: Client = {
   },
 
   meta: {
-    title: "Cadeaux d'entreprise personnalisés — Réusit",
+    title: "Cadeaux d'entreprise personnalisés · Réusit",
     description:
       "Collection de cadeaux d'entreprise personnalisables pour les fêtes de fin d'année. Médaillons, boules et supports de téléphone en bois et plastique recyclé, fabriqués en Alsace.",
   },
@@ -45,7 +45,7 @@ export const alsaceLait: Client = {
     titleJoin: 'de ',
     titleAccent: 'votre entreprise',
     subtitle:
-      "Une collection d'objets personnalisables — médaillons, boules et supports de téléphone — pensée pour marquer la fin d'année avec élégance et authenticité régionale.",
+      "Une collection d'objets personnalisables (médaillons, boules et supports de téléphone) pensée pour marquer la fin d'année avec élégance et authenticité régionale.",
     cta: 'Découvrir les cadeaux',
   },
 
@@ -59,7 +59,7 @@ export const alsaceLait: Client = {
         slug: 'medaillon-diorama',
         name: 'Médaillon « Diorama forestier »',
         description:
-          'Boule de Noël aplatie en bois clair, scène en couches découpées au laser — renards, feuillages et baies.',
+          'Boule de Noël aplatie en bois clair, scène en couches découpées au laser : renards, feuillages et baies.',
         provenance: 'Bois clair découpé au laser · gravure personnalisable',
         image: medaillonDiorama,
         alt: 'Médaillon de Noël en bois clair avec scène forestière en couches : renards, feuillages et baies rouges',
@@ -67,7 +67,7 @@ export const alsaceLait: Client = {
       },
       {
         slug: 'etoiles-forestieres',
-        name: 'Étoiles forestières — Lot de 4',
+        name: 'Étoiles forestières (lot de 4)',
         description:
           'Quatre étoiles à suspendre en bois clair, silhouettes découpées au laser : cerf, renard, loup et ours.',
         provenance: 'Bois clair · découpe laser, motifs personnalisables',
@@ -122,7 +122,7 @@ export const alsaceLait: Client = {
     eyebrow: 'Galerie',
     title: 'La collection en images',
     intro:
-      'Un aperçu des pièces gravées et de leur mise en scène — chaque objet est unique, gravé à votre image.',
+      'Un aperçu des pièces gravées et de leur mise en scène. Chaque objet est unique, gravé à votre image.',
     photos: [
       {
         image: medaillonDiorama,
@@ -210,7 +210,7 @@ export const alsaceLait: Client = {
   },
 
   personalization: {
-    metaTitle: "Cadeaux d'entreprise — {nom}",
+    metaTitle: "Cadeaux d'entreprise · {nom}",
     metaDescription:
       "Collection de cadeaux d'entreprise personnalisables, gravés au logo {nom}. Fabriqués en Alsace par Réusit.",
     heroLead: 'Noël aux couleurs',

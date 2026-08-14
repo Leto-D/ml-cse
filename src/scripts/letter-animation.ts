@@ -125,7 +125,7 @@ export function playLetterAnimation(anchor: HTMLElement): Promise<void> {
     overlay.appendChild(stage);
     document.body.appendChild(overlay);
 
-    // Phase A — l'enveloppe apparaît sur le bouton.
+    // Phase A : l'enveloppe apparaît sur le bouton.
     stage.animate(
       [
         { transform: 'translate(-50%, -50%) scale(0.9)', opacity: 0 },
@@ -134,7 +134,7 @@ export function playLetterAnimation(anchor: HTMLElement): Promise<void> {
       { duration: TIMING.appear, easing: 'ease-out', fill: 'forwards' }
     );
 
-    // Phase B — le rabat se ferme, le cachet de cire se pose.
+    // Phase B : le rabat se ferme, le cachet de cire se pose.
     const sealTimer = window.setTimeout(() => {
       flap.animate(
         [{ transform: 'rotateX(0deg)' }, { transform: 'rotateX(180deg)' }],
@@ -153,7 +153,7 @@ export function playLetterAnimation(anchor: HTMLElement): Promise<void> {
       );
     }, TIMING.appear);
 
-    // Phase C — départ en diagonale + sillage doré.
+    // Phase C : départ en diagonale + sillage doré.
     const flyTimer = window.setTimeout(() => {
       stage.animate(
         [
