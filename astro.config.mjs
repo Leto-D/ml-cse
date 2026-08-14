@@ -5,6 +5,7 @@ import { defineConfig } from 'astro/config';
 // Netlify Forms détecte le <form> dans le HTML produit : pas d'adaptateur requis.
 export default defineConfig({
   site: 'https://reusit.fr',
+  base: '/ml-cse',
   output: 'static',
   build: {
     inlineStylesheets: 'auto',
