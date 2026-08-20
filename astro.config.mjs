@@ -9,6 +9,17 @@ export default defineConfig({
   site: 'https://leto-d.github.io',
   base: '/ml-cse',
   output: 'static',
+  /*
+    Pas d'intégration React : la scène 3D n'est pas un îlot Astro. Elle est
+    montée à la main par scripts/bauble.ts derrière un `import()`, ce qui est
+    la seule façon de ne rien télécharger sous `prefers-reduced-motion` ni
+    tant que la section n'approche pas.
+
+    @astrojs/react n'injecte son préambule Fast Refresh que sur les pages qui
+    portent un îlot : l'ajouter sans en utiliser casse le serveur de
+    développement (`$RefreshSig$ is not defined`). Le JSX est donc compilé par
+    esbuild, d'après `jsx` / `jsxImportSource` de tsconfig.json.
+  */
   build: {
     inlineStylesheets: 'auto',
   },

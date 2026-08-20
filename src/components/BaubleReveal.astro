@@ -1,0 +1,330 @@
+---
+/**
+ * Section « boule de Noël bois » : effet 3D piloté par le défilement.
+ *
+ * La section fait 250vh et contient un conteneur `sticky` de 100svh. La
+ * progression 0→1 est mesurée sur cette hauteur par l'îlot React. Aucun
+ * défilement n'est intercepté : la scène lit une position, elle ne la pilote
+ * pas. `svh` et non `vh`, sinon la barre d'adresse d'iOS fait sauter le calage.
+ *
+ * Le hero n'est pas touché : cette section vient après lui, coffret compris.
+ *
+ * Trois choses vivent ici, et pas dans le canevas :
+ *  — le texte commercial, en HTML, lisible par les crawlers et les lecteurs
+ *    d'écran (le canevas est décoratif et `aria-hidden`) ;
+ *  — le repli statique, deux figures SVG posées dès le premier octet : c'est
+ *    à la fois le poster (le bloc n'est jamais vide) ET le repli servi sous
+ *    `prefers-reduced-motion` comme en l'absence de WebGL ;
+ *  — le script de garde (scripts/bauble.ts), qui ne pèse que quelques
+ *    centaines d'octets et ne tire React, three et la scène que si le
+ *    mouvement est autorisé, que WebGL répond, et que la section approche.
+ *    Sous `reduce` ou sans WebGL : zéro octet chargé.
+ */
+import type { Client } from '~/types';
+import Icon from './Icon.astro';
+
+interface Props {
+  client: Client;
+}
+
+const { client } = Astro.props;
+const bauble = client.bauble;
+
+// Sérialisé pour le script de garde. Le composant ne connaît aucune valeur en
+// dur : décor, logo et nom viennent tous de la config du client.
+const data = bauble && {
+  decor: bauble.decor,
+  logoUrl: bauble.logoUrl,
+  companyName: bauble.companyName,
+  backEngraving: bauble.backEngraving,
+  frontHasCutouts: bauble.frontHasCutouts,
+};
+---
+
+{
+  bauble && (
+    <section class="bauble" data-bauble aria-labelledby="bauble-title">
+      <div class="bauble-stage">
+        <div class="container">
+          <div class="bauble-inner">
+            <div class="bauble-copy reveal">
+              <span class="hero-eyebrow">{bauble.eyebrow}</span>
+              <h2 id="bauble-title">{bauble.title}</h2>
+              <p class="bauble-subtitle">{bauble.subtitle}</p>
+              <a href="#contact" class="pill-btn">
+                Demander un devis
+                <Icon name="arrow-down" />
+              </a>
+            </div>
+
+            <div class="bauble-media">
+              {/* Repli statique : assemblée et désassemblée, côte à côte. Pas
+                  une version ralentie de l'animation — deux états, immobiles. */}
+              <div class="bauble-fallback" aria-hidden="true">
+                {/* Les deux tracés sont définis une seule fois et réemployés :
+                    la silhouette pleine (le fond) et la même silhouette
+                    ajourée (la plaque avant). Règle de remplissage `evenodd` :
+                    ce sont de vrais vides, pas des formes peintes. */}
+                <svg class="bauble-fig" viewBox="0 0 200 254" focusable="false">
+                  <defs>
+                    <path
+                      id="bauble-solid"
+                      fill-rule="evenodd"
+                      d="M117 66L117 54A17 17 0 0 0 83 54L83 66A84 84 0 1 0 117 66Z
+                         M93 54a7 7 0 1 0 14 0a7 7 0 1 0-14 0Z"
+                    />
+                    <path
+                      id="bauble-cut"
+                      fill-rule="evenodd"
+                      d="M117 66L117 54A17 17 0 0 0 83 54L83 66A84 84 0 1 0 117 66Z
+                         M93 54a7 7 0 1 0 14 0a7 7 0 1 0-14 0Z
+                         M29.2 135L39 118L49 135L59 104L70 135L80 92L90 135L100 86L110 135L120 92L131 135L141 104L151 135L161 118L170.8 135A72 72 0 0 0 29.2 135Z
+                         M61 205L61 185A39 39 0 0 1 139 185L139 205Z
+                         M41 138L49 146L41 154L33 146Z
+                         M159 138L167 146L159 154L151 146Z
+                         M43 164L51 172L43 180L35 172Z
+                         M157 164L165 172L157 180L149 172Z"
+                    />
+                    <radialGradient id="bauble-shade" cx="0.36" cy="0.28" r="0.8">
+                      <stop offset="0" stop-color="#F6E3C4" stop-opacity="0.5" />
+                      <stop offset="1" stop-color="#8A6238" stop-opacity="0.42" />
+                    </radialGradient>
+                  </defs>
+
+                  {/* Le fond, décalé : ce qu'on aperçoit par les ajours. */}
+                  <use href="#bauble-solid" fill="#8A6238" transform="translate(5 5)" />
+                  <circle
+                    cx="105"
+                    cy="183"
+                    r="17"
+                    fill="none"
+                    stroke="#4A3018"
+                    stroke-opacity="0.5"
+                    stroke-width="5"
+                  />
+                  {/* La plaque ajourée, par-dessus. */}
+                  <use href="#bauble-cut" fill="#D8B489" />
+                  <use href="#bauble-cut" fill="url(#bauble-shade)" />
+                  <text
+                    x="100"
+                    y="248"
+                    text-anchor="middle"
+                    font-size="11"
+                    letter-spacing="2.4"
+                    fill="#5C3E22"
+                    fill-opacity="0.55"
+                  >
+                    PLACEHOLDER
+                  </text>
+                </svg>
+
+                <svg class="bauble-fig bauble-fig--wide" viewBox="0 0 400 254" focusable="false">
+                  {/* Chaque plaque est doublée d'une copie plus sombre, décalée :
+                      la frange qui dépasse est la tranche du bois. C'est elle
+                      qui dit que l'objet est massif et non imprimé. */}
+                  <g transform="translate(21 26) scale(0.79)">
+                    <use href="#bauble-cut" fill="#9A7146" transform="translate(7 7)" />
+                    <use href="#bauble-cut" fill="#E8CFA6" />
+                  </g>
+                  <g transform="translate(221 26) scale(0.79)">
+                    <use href="#bauble-solid" fill="#9A7146" transform="translate(7 7)" />
+                    <use href="#bauble-solid" fill="#EBD3AE" />
+                    {/* Le bloc gravé du dos : mention d'origine, filet, nom. */}
+                    <g fill="#5C3E22" fill-opacity="0.5">
+                      <rect x="46" y="112" width="108" height="11" rx="5" />
+                      <rect x="70" y="131" width="60" height="3" rx="1.5" />
+                      <rect x="58" y="141" width="84" height="12" rx="6" />
+                    </g>
+                    <circle
+                      cx="100"
+                      cy="185"
+                      r="15"
+                      fill="none"
+                      stroke="#5C3E22"
+                      stroke-opacity="0.5"
+                      stroke-width="5"
+                    />
+                  </g>
+                  <text
+                    x="200"
+                    y="248"
+                    text-anchor="middle"
+                    font-size="11"
+                    letter-spacing="2.4"
+                    fill="#5C3E22"
+                    fill-opacity="0.55"
+                  >
+                    PLACEHOLDER
+                  </text>
+                </svg>
+              </div>
+
+              <div class="bauble-canvas" data-bauble-mount aria-hidden="true" role="presentation" />
+              <script
+                is:inline
+                type="application/json"
+                data-bauble-props
+                set:html={JSON.stringify(data)}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  /* La hauteur défilable. Le conteneur `sticky` vit dedans. */
+  .bauble {
+    position: relative;
+    height: 250vh;
+  }
+
+  .bauble-stage {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+  }
+  .bauble-stage > .container {
+    width: 100%;
+  }
+
+  .bauble-inner {
+    display: grid;
+    grid-template-columns: 0.92fr 1.08fr;
+    align-items: center;
+    gap: var(--sp-7);
+  }
+
+  .bauble-copy h2 {
+    margin: var(--sp-2) 0 var(--sp-4);
+  }
+  .bauble-subtitle {
+    max-width: 46ch;
+    margin-bottom: var(--sp-5);
+  }
+
+  /*
+    Le cadre qui accueille la scène. Le repli et le canevas s'y superposent.
+    Plus large que haut, et ce n'est pas un choix graphique : en fin de course
+    l'objet fait deux plaques côte à côte, donc près de deux fois plus large
+    que haut. Dans un cadre carré il faudrait le réduire d'un tiers pour le
+    faire tenir, et tout le geste se jouerait petit.
+  */
+  .bauble-media {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    max-height: 72svh;
+    margin-inline: auto;
+  }
+
+  .bauble-fallback {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-4);
+    transition: opacity 0.45s ease;
+  }
+  .bauble-fig {
+    width: auto;
+    height: min(100%, 46svh);
+    max-width: 46%;
+  }
+  /* L'éclaté tient deux plaques côte à côte : il lui faut toute la largeur. */
+  .bauble-fig--wide {
+    max-width: 96%;
+  }
+  .bauble[data-bauble-live] .bauble-fig--wide {
+    display: none;
+  }
+  /*
+    Deux figures par défaut : c'est le repli complet, celui qui doit rester
+    lisible sans JavaScript, sans WebGL, et sous mouvement réduit.
+    `data-bauble-live` n'est posé que si la scène va effectivement venir : le
+    repli se réduit alors à la boule fermée, qui sert de poster.
+  */
+
+  .bauble-canvas {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+
+  /* Posé à la première image réellement rendue. Tant qu'il manque — mouvement
+     réduit, WebGL absent, chunk en échec — le repli reste, sans message. */
+  .bauble[data-bauble-ready] .bauble-fallback {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .bauble[data-bauble-ready] .bauble-canvas {
+    opacity: 1;
+  }
+  /*
+    Le div que r3f crée DANS .bauble-canvas est fabriqué en JavaScript : il ne
+    porte pas l'attribut de scope d'Astro. Toute règle qui le vise doit passer
+    par :global(), sinon elle ne s'applique jamais (même piège que les
+    suggestions de /lab/logo).
+  */
+  .bauble-canvas :global(canvas) {
+    display: block;
+  }
+
+  @media (max-width: 960px) {
+    .bauble {
+      height: 200vh;
+    }
+    .bauble-inner {
+      grid-template-columns: 1fr;
+      text-align: center;
+      gap: var(--sp-5);
+    }
+    .bauble-subtitle {
+      margin-inline: auto;
+    }
+    .bauble-media {
+      max-height: 46svh;
+    }
+    .bauble-fig {
+      height: min(100%, 30svh);
+    }
+  }
+
+  /* Aucune animation sous mouvement réduit : les deux états, côte à côte,
+     immobiles. L'îlot n'est de toute façon jamais monté. */
+  @media (prefers-reduced-motion: reduce) {
+    .bauble {
+      height: auto;
+    }
+    .bauble-stage {
+      position: static;
+      height: auto;
+      padding: var(--sp-9) 0;
+    }
+    .bauble-fallback {
+      position: static;
+      transition: none;
+      flex-wrap: wrap;
+    }
+    .bauble-media {
+      aspect-ratio: auto;
+      max-height: none;
+    }
+    .bauble-fig {
+      height: auto;
+      max-width: 44%;
+    }
+  }
+</style>
+
+<script>
+  import { initBauble } from '~/scripts/bauble';
+  initBauble();
+</script>

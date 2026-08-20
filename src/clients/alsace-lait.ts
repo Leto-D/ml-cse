@@ -53,6 +53,23 @@ export const alsaceLait: Client = {
     },
   },
 
+  /**
+   * Gamme boules de Noël en bois usinées CNC. Ligne distincte des médailles
+   * en PEHD recyclé : le discours ne doit pas mélanger les deux.
+   * `logoUrl` omis → marque placeholder neutre dessinée au canevas. Ne jamais
+   * y poser le logo d'une entreprise qui n'est pas cliente.
+   */
+  bauble: {
+    eyebrow: 'Nouveauté · Gamme bois',
+    title: 'La boule se sépare, votre marque apparaît',
+    subtitle:
+      "Une plaque de hêtre ajourée à la commande numérique, posée sur un fond plein : le décor est de la matière retirée, et votre marque apparaît dans l'ouverture. Séparez les deux plaques, le dos gravé se découvre.",
+    decor: 'sapins',
+    companyName: 'Votre entreprise',
+    backEngraving: 'Fabriqué en Alsace',
+    frontHasCutouts: true,
+  },
+
   products: {
     eyebrow: 'Nos idées cadeaux',
     title: 'Des objets qui font sens',

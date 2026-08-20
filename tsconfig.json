@@ -6,6 +6,10 @@
     "baseUrl": ".",
     "paths": {
       "~/*": ["src/*"]
-    }
+    },
+    // React est le seul framework JSX du projet : les .tsx de l'îlot 3D sont
+    // compilés avec sa transformation automatique.
+    "jsx": "react-jsx",
+    "jsxImportSource": "react"
   }
 }
