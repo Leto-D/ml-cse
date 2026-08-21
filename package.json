@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
+    "artwork": "node tools/bauble-artwork.mjs",
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check"

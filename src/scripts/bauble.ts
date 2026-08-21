@@ -18,15 +18,16 @@
  * empêcherait Astro de traiter ce script.
  */
 
+import type { ArtworkId } from '~/types';
+
 /** Marge d'anticipation : le module part avant que la section soit à l'écran. */
 const PRELOAD_MARGIN = '400px';
 
 interface BaubleData {
-  decor: 'etoiles' | 'sapins' | 'flocons';
+  artwork: ArtworkId;
   logoUrl?: string;
   companyName: string;
   backEngraving: string;
-  frontHasCutouts: boolean;
 }
 
 function hasWebGL(): boolean {

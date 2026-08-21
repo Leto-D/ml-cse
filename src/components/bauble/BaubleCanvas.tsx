@@ -6,16 +6,19 @@
  * seulement si le mouvement est autorisé et WebGL disponible.
  *
  * ── L'objet ───────────────────────────────────────────────────────────────
- * Deux plaques de bois collées face contre face, et elles ne jouent pas le
- * même rôle :
+ * Deux plaques de bois collées face contre face, toutes deux AJOURÉES, et
+ * elles ne portent pas le même dessin :
  *
- *   — la DÉCOUPE, devant. Une plaque ajourée dont les vides forment le décor :
- *     ligne d'arbres, ouverture centrale, petits motifs. Son dessin est de la
- *     matière retirée, pas une texture.
- *   — le FOND, derrière. Une plaque pleine, plus sombre, qu'on aperçoit à
- *     travers les ajours. Son recto porte le logo, placé exactement dans
- *     l'ouverture centrale. Son verso porte le bloc gravé — mention d'origine
- *     et nom de l'entreprise —, invisible tant que la boule est montée.
+ *   — l'AVANT. Le ciel est retiré autour du médaillon de la marque, et les dix
+ *     lettres du nom traversent la bande du bas. Le médaillon lui-même —
+ *     coiffe, feuille, collerette, visage — est gravé au trait, pas découpé.
+ *   — l'ARRIÈRE, plus sombre : c'est elle qu'on aperçoit par la fenêtre de
+ *     l'avant, et son ciel à elle est retiré autour d'une ligne de sapins et
+ *     d'un village. Son verso porte le bloc gravé — logo, mention d'origine et
+ *     nom de l'entreprise —, invisible tant que la boule est montée.
+ *
+ * Les deux découpes ne coïncident pas, et c'est tout le sujet : la fenêtre de
+ * l'avant s'ouvre exactement là où l'arrière a ses sapins.
  *
  * ── Mécanique ─────────────────────────────────────────────────────────────
  * L'objet ne s'ouvre pas : il se désassemble, en éclaté latéral, en trois temps
@@ -24,12 +27,12 @@
  *   1. Amorce (0 → 12 %). Les deux plaques se décollent de quelques
  *      millimètres dans l'épaisseur. C'est ce court instant qui dit qu'elles
  *      étaient collées, et sans lui l'écartement se lit comme un simple
- *      glissement. Il ouvre aussi la parallaxe entre la découpe et le fond.
+ *      glissement. Il ouvre aussi la parallaxe entre les deux découpes.
  *   2. Écartement (10 % → 70 %). Elles partent en sens opposés à
- *      l'horizontale, toujours à distance dans l'épaisseur. La découpe garde
- *      sa face vers la caméra — c'est elle qu'on est venu voir — et ne reçoit
+ *      l'horizontale, toujours à distance dans l'épaisseur. L'avant garde sa
+ *      face vers la caméra — c'est lui qu'on est venu voir — et ne reçoit
  *      qu'un balancement qui revient à zéro.
- *   3. Retournement (52 % → 100 %). Le FOND pivote de 180° sur son axe
+ *   3. Retournement (52 % → 100 %). L'ARRIÈRE pivote de 180° sur son axe
  *      vertical : un demi-tour autour d'un axe vertical amène sa face −z en
  *      +z, donc son verso gravé finit face caméra. Il chevauche la fin de
  *      l'écartement, sinon le geste se lirait en deux animations.
@@ -39,7 +42,7 @@
  *
  * Le point à ne pas contourner : écarter les plaques le long de l'axe de la
  * caméra ne révélerait rien. Ici l'écartement est LATÉRAL, et c'est le
- * retournement du fond qui fait la révélation.
+ * retournement de l'arrière qui fait la révélation.
  *
  * L'écartement étant symétrique, le centroïde ne bouge pas : aucun recentrage
  * n'est nécessaire.
@@ -60,20 +63,30 @@ import {
   SRGBColorSpace,
   Texture,
 } from 'three';
-import type { DecorId } from '~/types';
-import { buildPlate, FRAME, SIL, type PlateGeometry } from './shape';
+import type { ArtworkId } from '~/types';
+import type { BaubleArtwork } from './artwork';
+import { ALSACE_LAIT } from './artwork.gen';
+import { buildPlate, BODY_R, FRAME, type PlateGeometry } from './shape';
 import {
-  composeCutFace,
-  composeFondRecto,
-  composeFondVerso,
+  composeBackBack,
+  composeBackFront,
+  composeFrontFace,
   type WoodPalette,
 } from './textures';
+
+/**
+ * Les tracés disponibles. C'est un identifiant, et non les données elles-mêmes,
+ * qui traverse la config du client puis le `<script type="application/json">` :
+ * le dessin, lui, ne quitte jamais le morceau three.
+ */
+const ARTWORKS: Record<ArtworkId, BaubleArtwork> = { 'alsace-lait': ALSACE_LAIT };
 
 /* ════════════════════════════════════════════════════════════════════════ *
  *  BLOC DE CONSTANTES
  *  Régler le mouvement ou remplacer les visuels doit se faire ici, et
- *  nulle part ailleurs dans le fichier. La silhouette et le tracé des ajours
- *  ont le leur, dans `shape.ts` (SIL et LAYOUT).
+ *  nulle part ailleurs dans le fichier. La silhouette et le tracé des ajours,
+ *  eux, ne se règlent pas : ils viennent du dessin du client, par
+ *  `artwork.gen.ts`.
  * ════════════════════════════════════════════════════════════════════════ */
 
 /**
@@ -100,16 +113,16 @@ const ANIM = {
   /** Demi-écart final entre les deux centres, en rayons de corps. */
   SPREAD: 1.1,
   /**
-   * Début du retournement. Volontairement tardif : le disque du fond balaie
+   * Début du retournement. Volontairement tardif : le disque arrière balaie
    * l'axe z en tournant, et tant que les deux plaques se recouvrent encore en
    * x, un retournement précoce les ferait se traverser. À 52 % l'écartement
    * est déjà fait aux quatre cinquièmes.
    */
   FLIP_START: 0.52,
-  /** Retournement du fond : un demi-tour, pas moins. */
+  /** Retournement de la plaque arrière : un demi-tour, pas moins. */
   FLIP: Math.PI,
-  /** Balancement de la découpe. Nul au début et à la fin. */
-  CUT_SWING: 0.3,
+  /** Balancement de la plaque avant. Nul au début et à la fin. */
+  FRONT_SWING: 0.3,
   /** Basculement trois quarts, maximal à 50 %, nul à 0 % et à 100 %. */
   TILT_Y: 0.24,
   TILT_X: 0.1,
@@ -172,13 +185,12 @@ const LIGHTS = {
 /* ════════════════════════════════════════════════════════════════════════ */
 
 export interface BaubleProps {
-  decor: DecorId;
+  /** Quels tracés monter. Le dessin réel est résolu ici, jamais transporté. */
+  artwork: ArtworkId;
   logoUrl?: string;
   companyName: string;
-  /** Mention gravée au dos, révélée par le retournement du fond. */
+  /** Mention gravée au dos, révélée par le retournement de la plaque arrière. */
   backEngraving: string;
-  /** La plaque avant est-elle ajourée ? Faux = deux plaques pleines. */
-  frontHasCutouts: boolean;
   /** Élément qui porte la hauteur défilable. La progression y est mesurée. */
   section: HTMLElement;
   /** Appelé à la première image effectivement rendue : masque le repli SVG. */
@@ -255,13 +267,13 @@ function makeTexture(canvas: HTMLCanvasElement, anisotropy: number) {
 }
 
 interface Kit {
-  /** Les deux faces de la plaque ajourée : même planche, même texture. */
-  cutFace: Material;
-  /** Le fond, côté caméra. Aperçu par les ajours. */
-  fondRecto: Material;
+  /** Les deux faces de la plaque avant : même planche, même texture. */
+  front: Material;
+  /** La plaque arrière côté caméra. Aperçue par la fenêtre de l'avant. */
+  backFront: Material;
   /** Le dos gravé. C'est la récompense du défilement. */
-  fondVerso: Material;
-  /** Toutes les parois : contour, œillet, ajours. */
+  backBack: Material;
+  /** Toutes les parois : contour, œillet et tous les ajours. */
   edge: Material;
   dispose: () => void;
 }
@@ -276,18 +288,18 @@ function buildKit(
   anisotropy: number,
 ): Kit {
   const base = {
-    decor: spec.decor,
     logo,
     companyName: spec.companyName,
     backEngraving: spec.backEngraving,
     palette: WOOD,
     size,
   };
+  const art = ARTWORKS[spec.artwork];
 
   const maps = [
-    makeTexture(composeCutFace(base), anisotropy),
-    makeTexture(composeFondRecto(base), anisotropy),
-    makeTexture(composeFondVerso(base), anisotropy),
+    makeTexture(composeFrontFace({ ...base, engraving: art.front.engraving }), anisotropy),
+    makeTexture(composeBackFront(base), anisotropy),
+    makeTexture(composeBackBack(base), anisotropy),
   ];
 
   const lit = MATERIAL_MODE === 'procedural';
@@ -306,9 +318,9 @@ function buildKit(
   const mats = [face(maps[0]), face(maps[1]), face(maps[2]), edge];
 
   return {
-    cutFace: mats[0],
-    fondRecto: mats[1],
-    fondVerso: mats[2],
+    front: mats[0],
+    backFront: mats[1],
+    backBack: mats[2],
     edge,
     dispose: () => {
       mats.forEach((m) => m.dispose());
@@ -354,8 +366,8 @@ function Plate({
  * ---------------------------------------------------------------- */
 function Bauble({ section, onReady, ...spec }: BaubleProps) {
   const stage = useRef<Group>(null);
-  const cut = useRef<Group>(null);
-  const fond = useRef<Group>(null);
+  const front = useRef<Group>(null);
+  const back = useRef<Group>(null);
   // −1 = pas encore initialisé. Au premier rendu on colle à la progression
   // réelle : recharger la page au milieu de la section ne doit pas rejouer le
   // désassemblage depuis le début.
@@ -370,19 +382,17 @@ function Bauble({ section, onReady, ...spec }: BaubleProps) {
   // La géométrie ne dépend que du tracé : elle se construit sans attendre le
   // logo, contrairement aux textures.
   const geo = useMemo(() => {
-    const fond = buildPlate(spec.decor, false, GEO.THICKNESS);
-    // Sans ajours, les deux plaques ont exactement la même forme : on partage
-    // le tampon plutôt que d'en construire deux identiques.
-    const cut = spec.frontHasCutouts
-      ? buildPlate(spec.decor, true, GEO.THICKNESS)
-      : fond;
-    return { cut, fond };
-  }, [spec.decor, spec.frontHasCutouts]);
+    const art = ARTWORKS[spec.artwork];
+    return {
+      front: buildPlate(art.front, GEO.THICKNESS),
+      back: buildPlate(art.back, GEO.THICKNESS),
+    };
+  }, [spec.artwork]);
 
   useEffect(
     () => () => {
-      geo.cut.dispose();
-      if (geo.fond !== geo.cut) geo.fond.dispose();
+      geo.front.dispose();
+      geo.back.dispose();
     },
     [geo],
   );
@@ -406,10 +416,10 @@ function Bauble({ section, onReady, ...spec }: BaubleProps) {
     // Recomposer sur ces entrées seulement : c'est le point d'insertion exact
     // du futur configurateur (redessiner, puis `needsUpdate`).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [spec.decor, spec.logoUrl, spec.companyName, spec.backEngraving, gl]);
+  }, [spec.artwork, spec.logoUrl, spec.companyName, spec.backEngraving, gl]);
 
   useFrame((state, delta) => {
-    if (!stage.current || !cut.current || !fond.current) return;
+    if (!stage.current || !front.current || !back.current) return;
 
     const target = progress.current;
     if (smoothed.current < 0) smoothed.current = target;
@@ -420,7 +430,7 @@ function Bauble({ section, onReady, ...spec }: BaubleProps) {
     smoothed.current = s;
 
     const T = GEO.THICKNESS;
-    const R = SIL.R;
+    const R = BODY_R;
 
     // Temps 1 : le décollement dans l'épaisseur.
     const unstick = easeInOutCubic(range(s, 0, ANIM.UNSTICK_END));
@@ -433,7 +443,7 @@ function Bauble({ section, onReady, ...spec }: BaubleProps) {
       Le jeu dans l'épaisseur s'ouvre pendant l'amorce, reste ouvert pendant
       TOUT le glissement, et ne se referme que sur le retournement.
 
-      Ce n'est pas cosmétique. En tournant, le disque du fond balaie l'axe z de
+      Ce n'est pas cosmétique. En tournant, le disque arrière balaie l'axe z de
       part et d'autre de son plan, jusqu'à un rayon entier. Tant que les deux
       plaques se recouvrent encore en x, seule cette distance les empêche de se
       traverser. Refermer le jeu sur l'écartement, comme le voudrait l'intuition,
@@ -446,13 +456,13 @@ function Bauble({ section, onReady, ...spec }: BaubleProps) {
     const sep = (T / 2 + R * ANIM.UNSTICK_GAP * unstick) * (1 - flip);
     const shift = R * ANIM.SPREAD * spread;
 
-    // La découpe reste face caméra : c'est le dessin qu'on est venu voir.
-    cut.current.position.set(-shift, 0, sep);
-    cut.current.rotation.y = ANIM.CUT_SWING * Math.sin(Math.PI * spread);
+    // L'avant reste face caméra : c'est le dessin qu'on est venu voir.
+    front.current.position.set(-shift, 0, sep);
+    front.current.rotation.y = ANIM.FRONT_SWING * Math.sin(Math.PI * spread);
 
-    // Le fond se retourne et livre son dos gravé.
-    fond.current.position.set(shift, 0, -sep);
-    fond.current.rotation.y = ANIM.FLIP * flip;
+    // L'arrière se retourne et livre son dos gravé.
+    back.current.position.set(shift, 0, -sep);
+    back.current.rotation.y = ANIM.FLIP * flip;
 
     // Nul à 0 et à 1, maximal à 50 % : le basculement fait partie du même
     // mouvement continu, ce n'est pas une seconde animation.
@@ -512,22 +522,22 @@ function Bauble({ section, onReady, ...spec }: BaubleProps) {
       )}
 
       <group ref={stage}>
-        {/* Le fond. Recto vers la caméra — c'est lui qu'on aperçoit par les
-            ajours —, verso gravé, que le retournement révèle. */}
-        <group ref={fond} position={[0, 0, -T / 2]}>
+        {/* La plaque arrière. Sa face avant est celle qu'on aperçoit par la
+            fenêtre ; son dos gravé, que le retournement révèle. */}
+        <group ref={back} position={[0, 0, -T / 2]}>
           <Plate
-            geo={geo.fond}
-            zPlus={kit.fondRecto}
-            zMinus={kit.fondVerso}
+            geo={geo.back}
+            zPlus={kit.backFront}
+            zMinus={kit.backBack}
             edge={kit.edge}
           />
         </group>
-        {/* La découpe. Son décor est dans la géométrie : les vides. */}
-        <group ref={cut} position={[0, 0, T / 2]}>
+        {/* La plaque avant. Son décor est dans la géométrie : les vides. */}
+        <group ref={front} position={[0, 0, T / 2]}>
           <Plate
-            geo={geo.cut}
-            zPlus={kit.cutFace}
-            zMinus={kit.cutFace}
+            geo={geo.front}
+            zPlus={kit.front}
+            zMinus={kit.front}
             edge={kit.edge}
           />
         </group>

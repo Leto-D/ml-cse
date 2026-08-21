@@ -22,6 +22,7 @@
  */
 import type { Client } from '~/types';
 import Icon from './Icon.astro';
+import { POSTER } from './bauble/poster.gen';
 
 interface Props {
   client: Client;
@@ -33,11 +34,10 @@ const bauble = client.bauble;
 // Sérialisé pour le script de garde. Le composant ne connaît aucune valeur en
 // dur : décor, logo et nom viennent tous de la config du client.
 const data = bauble && {
-  decor: bauble.decor,
+  artwork: bauble.artwork,
   logoUrl: bauble.logoUrl,
   companyName: bauble.companyName,
   backEngraving: bauble.backEngraving,
-  frontHasCutouts: bauble.frontHasCutouts,
 };
 ---
 
@@ -61,92 +61,87 @@ const data = bauble && {
               {/* Repli statique : assemblée et désassemblée, côte à côte. Pas
                   une version ralentie de l'animation — deux états, immobiles. */}
               <div class="bauble-fallback" aria-hidden="true">
-                {/* Les deux tracés sont définis une seule fois et réemployés :
-                    la silhouette pleine (le fond) et la même silhouette
-                    ajourée (la plaque avant). Règle de remplissage `evenodd` :
-                    ce sont de vrais vides, pas des formes peintes. */}
-                <svg class="bauble-fig" viewBox="0 0 200 254" focusable="false">
+                {/* Les tracés sont ceux de la scène 3D — mêmes fichiers SVG,
+                    même générateur —, simplifiés pour la taille d'un poster.
+                    Ils sont définis une seule fois et réemployés. Règle de
+                    remplissage `evenodd` : ce sont de vrais vides, pas des
+                    formes peintes. */}
+                <svg class="bauble-fig" viewBox={`0 0 ${POSTER.W} ${POSTER.H}`} focusable="false">
                   <defs>
-                    <path
-                      id="bauble-solid"
-                      fill-rule="evenodd"
-                      d="M117 66L117 54A17 17 0 0 0 83 54L83 66A84 84 0 1 0 117 66Z
-                         M93 54a7 7 0 1 0 14 0a7 7 0 1 0-14 0Z"
-                    />
-                    <path
-                      id="bauble-cut"
-                      fill-rule="evenodd"
-                      d="M117 66L117 54A17 17 0 0 0 83 54L83 66A84 84 0 1 0 117 66Z
-                         M93 54a7 7 0 1 0 14 0a7 7 0 1 0-14 0Z
-                         M29.2 135L39 118L49 135L59 104L70 135L80 92L90 135L100 86L110 135L120 92L131 135L141 104L151 135L161 118L170.8 135A72 72 0 0 0 29.2 135Z
-                         M61 205L61 185A39 39 0 0 1 139 185L139 205Z
-                         M41 138L49 146L41 154L33 146Z
-                         M159 138L167 146L159 154L151 146Z
-                         M43 164L51 172L43 180L35 172Z
-                         M157 164L165 172L157 180L149 172Z"
-                    />
+                    <path id="bauble-front" fill-rule="evenodd" d={POSTER.front.cut} />
+                    <path id="bauble-back" fill-rule="evenodd" d={POSTER.back.cut} />
+                    {/* Le médaillon en aplats, comme sur l'objet : coiffe
+                        brûlée, visage en bois nu, traits sombres. Les couches
+                        `wood` prennent `currentColor`, donc la teinte de la
+                        plaque qui les porte — les deux figures n'ont pas
+                        exactement le même bois. */}
+                    <g id="bauble-medal" fill-rule="evenodd">
+                      {POSTER.front.medallion.map((layer) => (
+                        <path
+                          d={layer.d}
+                          fill={layer.tone === 'burn' ? '#5C3E22' : 'currentColor'}
+                          fill-opacity={layer.tone === 'burn' ? 0.62 : 1}
+                        />
+                      ))}
+                    </g>
                     <radialGradient id="bauble-shade" cx="0.36" cy="0.28" r="0.8">
                       <stop offset="0" stop-color="#F6E3C4" stop-opacity="0.5" />
                       <stop offset="1" stop-color="#8A6238" stop-opacity="0.42" />
                     </radialGradient>
                   </defs>
 
-                  {/* Le fond, décalé : ce qu'on aperçoit par les ajours. */}
-                  <use href="#bauble-solid" fill="#8A6238" transform="translate(5 5)" />
-                  <circle
-                    cx="105"
-                    cy="183"
-                    r="17"
-                    fill="none"
-                    stroke="#4A3018"
-                    stroke-opacity="0.5"
-                    stroke-width="5"
-                  />
-                  {/* La plaque ajourée, par-dessus. */}
-                  <use href="#bauble-cut" fill="#D8B489" />
-                  <use href="#bauble-cut" fill="url(#bauble-shade)" />
-                  <text
-                    x="100"
-                    y="248"
-                    text-anchor="middle"
-                    font-size="11"
-                    letter-spacing="2.4"
-                    fill="#5C3E22"
-                    fill-opacity="0.55"
-                  >
-                    PLACEHOLDER
-                  </text>
+                  {/* La plaque arrière : c'est elle qu'on aperçoit par la
+                      fenêtre de l'avant, et elle est plus sombre. */}
+                  <use href="#bauble-back" fill="#8A6238" />
+                  {/* La plaque avant, par-dessus, et son médaillon gravé. */}
+                  <use href="#bauble-front" fill="#D8B489" />
+                  <use href="#bauble-medal" color="#D8B489" />
+                  <use href="#bauble-front" fill="url(#bauble-shade)" />
                 </svg>
 
-                <svg class="bauble-fig bauble-fig--wide" viewBox="0 0 400 254" focusable="false">
+                <svg
+                  class="bauble-fig bauble-fig--wide"
+                  viewBox={`0 0 ${2 * POSTER.W} ${POSTER.H}`}
+                  focusable="false"
+                >
                   {/* Chaque plaque est doublée d'une copie plus sombre, décalée :
                       la frange qui dépasse est la tranche du bois. C'est elle
                       qui dit que l'objet est massif et non imprimé. */}
                   <g transform="translate(21 26) scale(0.79)">
-                    <use href="#bauble-cut" fill="#9A7146" transform="translate(7 7)" />
-                    <use href="#bauble-cut" fill="#E8CFA6" />
+                    <use href="#bauble-front" fill="#9A7146" transform="translate(7 7)" />
+                    <use href="#bauble-front" fill="#E8CFA6" />
+                    <use href="#bauble-medal" color="#E8CFA6" />
                   </g>
                   <g transform="translate(221 26) scale(0.79)">
-                    <use href="#bauble-solid" fill="#9A7146" transform="translate(7 7)" />
-                    <use href="#bauble-solid" fill="#EBD3AE" />
-                    {/* Le bloc gravé du dos : mention d'origine, filet, nom. */}
-                    <g fill="#5C3E22" fill-opacity="0.5">
-                      <rect x="46" y="112" width="108" height="11" rx="5" />
-                      <rect x="70" y="131" width="60" height="3" rx="1.5" />
-                      <rect x="58" y="141" width="84" height="12" rx="6" />
+                    {/* Retournée : c'est son DOS qu'on découvre, donc sa
+                        découpe est en miroir. Le bloc gravé, lui, se lit à
+                        l'endroit — il n'est pas dans le miroir. */}
+                    <g transform={`translate(${POSTER.W} 0) scale(-1 1)`}>
+                      <use href="#bauble-back" fill="#9A7146" transform="translate(-7 7)" />
+                      <use href="#bauble-back" fill="#EBD3AE" />
                     </g>
+                    {/* Logo, filet, mention d'origine, nom : tout tient sous la
+                        ligne des portes, seule bande où cette plaque est pleine. */}
                     <circle
                       cx="100"
-                      cy="185"
-                      r="15"
+                      cy="181"
+                      r="9"
                       fill="none"
                       stroke="#5C3E22"
                       stroke-opacity="0.5"
-                      stroke-width="5"
+                      stroke-width="3"
                     />
+                    <g fill="#5C3E22" fill-opacity="0.5">
+                      <rect x="72" y="193" width="56" height="2.6" rx="1.3" />
+                      <rect x="58" y="199" width="84" height="7" rx="3.5" />
+                      <rect x="66" y="208.5" width="68" height="8" rx="4" />
+                    </g>
                   </g>
+                  {/* La mention ne vise QUE la plaque de droite : son bloc gravé
+                      est le seul placeholder qui reste. Le reste est le dessin
+                      réel du client. */}
                   <text
-                    x="200"
+                    x="300"
                     y="248"
                     text-anchor="middle"
                     font-size="11"
@@ -320,6 +315,16 @@ const data = bauble && {
     .bauble-fig {
       height: auto;
       max-width: 44%;
+    }
+    /*
+      Après `.bauble-fig`, et pas avant : à spécificité égale c'est la dernière
+      règle qui gagne, et l'éclaté se retrouverait plafonné à 44 % comme la
+      boule fermée. Il porte deux plaques côte à côte, donc deux fois la
+      largeur pour la même hauteur : à 44 % il devient illisible. Passé 100 %
+      à eux deux, les deux figures se rangent l'une sous l'autre.
+    */
+    .bauble-fig--wide {
+      max-width: 92%;
     }
   }
 </style>

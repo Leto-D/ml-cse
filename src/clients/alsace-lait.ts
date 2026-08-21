@@ -63,11 +63,10 @@ export const alsaceLait: Client = {
     eyebrow: 'Nouveauté · Gamme bois',
     title: 'La boule se sépare, votre marque apparaît',
     subtitle:
-      "Une plaque de hêtre ajourée à la commande numérique, posée sur un fond plein : le décor est de la matière retirée, et votre marque apparaît dans l'ouverture. Séparez les deux plaques, le dos gravé se découvre.",
-    decor: 'sapins',
+      "Deux plaques de hêtre ajourées à la commande numérique, montées l'une sur l'autre : le décor est de la matière retirée, et la forêt du fond se découvre par la fenêtre de l'avant. Séparez-les, le dos gravé porte votre marque.",
+    artwork: 'alsace-lait',
     companyName: 'Votre entreprise',
     backEngraving: 'Fabriqué en Alsace',
-    frontHasCutouts: true,
   },
 
   products: {

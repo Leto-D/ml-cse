@@ -52,22 +52,24 @@ export interface Value {
 }
 
 /**
- * Vocabulaire de la découpe. Il choisit le profil de la ligne d'arbres et la
- * forme des petits ajours qui l'accompagnent. Tout est tracé en vectoriel
- * (voir components/bauble/shape.ts) : aucun fichier image, donc aucun chemin
- * à faire passer par BASE_URL.
+ * Jeu de tracés d'une boule. Chaque identifiant renvoie au dessin réel d'un
+ * client, converti depuis ses fichiers SVG par `tools/bauble-artwork.mjs` : la
+ * silhouette, ce qui traverse le bois et ce qui n'est que gravé dessus.
+ * Aucun fichier image, donc aucun chemin à faire passer par BASE_URL.
  */
-export type DecorId = 'etoiles' | 'sapins' | 'flocons';
+export type ArtworkId = 'alsace-lait';
 
 /**
  * Boule de Noël en bois usinée CNC : section à effet 3D pilotée par le
  * défilement. Gamme distincte des médailles en PEHD recyclé — ne pas mélanger
  * les deux discours dans les textes.
  *
- * L'objet est fait de DEUX plaques qui ne jouent pas le même rôle : une plaque
- * ajourée devant, dont les vides forment le décor, et un fond plein derrière,
- * qu'on aperçoit à travers les ajours. Le défilement les sépare et retourne le
- * fond pour découvrir son dos gravé.
+ * L'objet est fait de DEUX plaques ajourées, montées face contre face. Le ciel
+ * est retiré des deux, mais pas autour du même dessin : devant le médaillon de
+ * la marque, derrière une ligne de sapins et un village. C'est ce décalage qui
+ * donne la profondeur — on regarde à travers l'avant et on voit l'arrière. Le
+ * défilement les sépare, puis retourne celle de derrière pour découvrir son dos
+ * gravé.
  *
  * Clé optionnelle : une landing qui ne la déclare pas n'affiche pas la section,
  * et les configs existantes restent valides.
@@ -78,24 +80,18 @@ export interface Bauble {
   eyebrow: string;
   title: string;
   subtitle: string;
-  /** Vocabulaire de la découpe. */
-  decor: DecorId;
+  /** Tracés de l'objet. */
+  artwork: ArtworkId;
   /**
-   * Logo posé dans l'ouverture centrale du fond, et repris au dos. Omis =
-   * marque placeholder neutre. Ne jamais y mettre le logo d'une entreprise qui
-   * n'est pas cliente : ce serait une fausse référence commerciale.
+   * Logo gravé au dos, dans le bloc que le retournement révèle. Omis = marque
+   * placeholder neutre. Ne jamais y mettre le logo d'une entreprise qui n'est
+   * pas cliente : ce serait une fausse référence commerciale.
    */
   logoUrl?: string;
-  /** Nom gravé sous le logo, et repris au dos. */
+  /** Nom gravé au dos, sous la mention d'origine. */
   companyName: string;
-  /** Mention gravée au dos du fond, révélée par le retournement. */
+  /** Mention gravée au dos, révélée par le retournement. */
   backEngraving: string;
-  /**
-   * La plaque avant est-elle ajourée ? Faux = deux plaques pleines, pour une
-   * gamme sans découpe. La réponse tranchée pour la gamme bois est « oui » :
-   * les ajours SONT le décor.
-   */
-  frontHasCutouts: boolean;
 }
 
 export interface Client {

@@ -1,7 +1,7 @@
 /**
  * Textures de la boule, composées au canevas à l'exécution.
  *
- * Rien n'est chargé depuis le disque : le bois, les gravures et le halo sont
+ * Rien n'est chargé depuis le disque : le bois, les gravures et le veinage sont
  * dessinés en JavaScript. Trois conséquences voulues :
  *
  * 1. zéro octet d'image dans le bundle ;
@@ -11,25 +11,25 @@
  *    base : ils sont deux couches peintes par-dessus, à la toute fin. Recomposer
  *    pour un configurateur = rappeler la fonction et poser `needsUpdate`.
  *
- * Trois faces seulement portent un dessin, et c'est la mécanique de l'objet qui
- * le dicte :
- *   — la DÉCOUPE (les deux faces de la plaque avant) est du bois nu. Son décor
- *     est de la matière retirée, il est dans la géométrie, pas dans la texture ;
- *   — le FOND RECTO est le bois sombre qu'on aperçoit à travers les ajours,
- *     avec le logo posé dans l'ouverture centrale ;
- *   — le FOND VERSO porte le bloc gravé — mention d'origine et nom — que le
- *     retournement révèle en fin de course.
+ * Trois faces portent un dessin, et c'est la mécanique de l'objet qui le dicte :
+ *   — la plaque AVANT porte le médaillon gravé : coiffe, feuille, collerette et
+ *     visage. Le reste de son décor — le ciel retiré, le lettrage — est de la
+ *     matière en moins, donc de la géométrie, pas de la texture ;
+ *   — la face avant de la plaque ARRIÈRE est du bois plus sombre. Son dessin à
+ *     elle, la ligne de sapins et le village, est également découpé ;
+ *   — le DOS de la plaque arrière porte le bloc gravé — mention d'origine, nom
+ *     et logo — que le retournement révèle en fin de course.
  *
- * Les visuels sont des PLACEHOLDERS et le disent : hachures diagonales et
- * mention « PLACEHOLDER » incrustées. Aucun risque de les confondre avec un
- * rendu final.
+ * Seul ce dos porte encore des placeholders — le logo client et son nom —, et
+ * il le dit : hachures diagonales et mention « PLACEHOLDER » incrustées. Le
+ * reste est le dessin réel du client.
  *
  * Le repère est celui de `shape.ts` : un carré de côté 2 × FRAME.HALF centré
  * sur la boîte englobante de la silhouette. Les deux fichiers DOIVENT lire les
  * mêmes constantes, sinon le décor glisse par rapport à la découpe.
  */
-import type { DecorId } from '~/types';
-import { FRAME, LAYOUT } from './shape';
+import type { EngravedLayer, Ring } from './artwork';
+import { FRAME } from './shape';
 
 export interface WoodPalette {
   /** Veine claire du bois. */
@@ -56,6 +56,35 @@ const px = (x: number, size: number) => ((x + FRAME.HALF) / SPAN) * size;
 const py = (y: number, size: number) => ((FRAME.HALF - (y - FRAME.CY)) / SPAN) * size;
 /** Longueur monde → longueur en pixels. */
 const pu = (l: number, size: number) => (l / SPAN) * size;
+
+/* ------------------------------------------------------------------ *
+ * Mise en page du dos gravé
+ *
+ * La plaque arrière est AJOURÉE elle aussi : le ciel est retiré au-dessus de
+ * y = 0,05, les toits descendent à −0,19, les portes à −0,33. Sous cette ligne
+ * le bois est plein d'un bord à l'autre, et c'est la seule bande où le bloc
+ * gravé peut vivre. Déplacer une de ces valeurs vers le haut, c'est écrire
+ * dans le vide.
+ * ------------------------------------------------------------------ */
+const BACK = {
+  /** Plafond de la zone pleine. Rien de gravé au-dessus. */
+  SOLID_TOP: -0.33,
+  LOGO_Y: -0.43,
+  LOGO_BOX: 0.26,
+  RULE_Y: -0.585,
+  ORIGIN_Y: -0.68,
+  ORIGIN_EM: 0.09,
+  ORIGIN_W: 1.05,
+  /**
+   * Le nom descend bas, et le corps est rond : à cette hauteur la corde ne
+   * fait plus qu'un rayon de large. La largeur maximale est calée dessus, pas
+   * sur le diamètre — sinon les lettres des extrémités tombent hors du bois.
+   */
+  NAME_Y: -0.8,
+  NAME_EM: 0.12,
+  NAME_W: 0.9,
+  MARK_Y: -0.245,
+};
 
 /* ------------------------------------------------------------------ *
  * Aléatoire déterministe
@@ -162,106 +191,94 @@ function drawWood(
  * Le relief vient de copies décalées, comme sur la page « Votre logo » :
  * une lèvre claire posée AU-DESSUS du tracé, puis le fond brûlé par-dessus.
  * Seule la frange qui dépasse reste visible, et c'est elle qui fait le creux.
+ *
+ * `draw` peut remplir ou tracer : les deux styles sont posés avant l'appel.
  * ------------------------------------------------------------------ */
 function engrave(
   ctx: CanvasRenderingContext2D,
   p: WoodPalette,
   depth: number,
-  shape: (c: CanvasRenderingContext2D) => void,
+  draw: (c: CanvasRenderingContext2D) => void,
 ) {
   ctx.save();
   ctx.translate(0, -depth);
   ctx.fillStyle = p.lip;
+  ctx.strokeStyle = p.lip;
   ctx.globalAlpha = 0.55;
-  shape(ctx);
+  draw(ctx);
   ctx.restore();
 
   ctx.save();
   ctx.fillStyle = p.burn;
+  ctx.strokeStyle = p.burn;
   ctx.globalAlpha = 0.82;
-  shape(ctx);
+  draw(ctx);
   ctx.restore();
 }
 
 const depthOf = (size: number) => Math.max(1.5, size * 0.0026);
 
 /* ------------------------------------------------------------------ *
- * Motifs
+ * Le médaillon du client
+ *
+ * En APLATS, et surtout pas au trait. Rendre ces contours au filet donne un
+ * masque : deux yeux et une bouche cernés, flottant sur du bois. Le logo
+ * imprimé est fait de masses — coiffe pleine, visage clair, traits sombres —,
+ * et c'est ce que le générateur livre : des couches, chacune avec sa teinte.
+ *
+ * Deux teintes, deux reliefs opposés, et c'est ce qui vend le creux :
+ *   `burn` la fraise est passée. Lèvre claire AU-DESSUS du tracé, fond brûlé
+ *         par-dessus ; la frange qui dépasse fait le bord du creux.
+ *   `wood` la matière est restée, c'est autour qu'on a creusé. Ombre portée
+ *         EN DESSOUS, puis le bois nu remis à sa place — le vrai, veinage
+ *         compris, découpé dans la planche d'origine. Un aplat de couleur
+ *         ferait un autocollant.
  * ------------------------------------------------------------------ */
-function starPath(c: CanvasRenderingContext2D, x: number, y: number, r: number, rot: number) {
+function ringsPath(c: CanvasRenderingContext2D, size: number, rings: readonly Ring[]) {
   c.beginPath();
-  for (let i = 0; i < 10; i++) {
-    const rad = i % 2 === 0 ? r : r * 0.44;
-    const a = rot + (i * Math.PI) / 5 - Math.PI / 2;
-    const dx = x + Math.cos(a) * rad;
-    const dy = y + Math.sin(a) * rad;
-    if (i === 0) c.moveTo(dx, dy);
-    else c.lineTo(dx, dy);
-  }
-  c.closePath();
-  c.fill();
-}
-
-function firPath(c: CanvasRenderingContext2D, x: number, y: number, r: number) {
-  c.beginPath();
-  for (let tier = 0; tier < 3; tier++) {
-    const w = r * (0.5 + tier * 0.26);
-    const top = y - r + tier * r * 0.52;
-    c.moveTo(x, top);
-    c.lineTo(x + w, top + r * 0.62);
-    c.lineTo(x - w, top + r * 0.62);
+  for (const r of rings) {
+    c.moveTo(px(r[0], size), py(r[1], size));
+    for (let i = 2; i < r.length; i += 2) c.lineTo(px(r[i], size), py(r[i + 1], size));
     c.closePath();
   }
-  c.rect(x - r * 0.12, y + r * 0.5, r * 0.24, r * 0.34);
-  c.fill();
 }
 
-function flakePath(c: CanvasRenderingContext2D, x: number, y: number, r: number, rot: number) {
-  c.save();
-  c.translate(x, y);
-  c.rotate(rot);
-  c.beginPath();
-  for (let i = 0; i < 6; i++) {
-    const a = (i * Math.PI) / 3;
-    const ux = Math.cos(a);
-    const uy = Math.sin(a);
-    c.moveTo(-ux * r * 0.08, -uy * r * 0.08);
-    c.lineTo(ux * r, uy * r);
-    // Deux barbes par branche.
-    for (const t of [0.5, 0.78]) {
-      const bx = ux * r * t;
-      const by = uy * r * t;
-      const nx = -uy * r * 0.22;
-      const ny = ux * r * 0.22;
-      c.moveTo(bx, by);
-      c.lineTo(bx + nx * 0.8 + ux * r * 0.14, by + ny * 0.8 + uy * r * 0.14);
-      c.moveTo(bx, by);
-      c.lineTo(bx - nx * 0.8 + ux * r * 0.14, by - ny * 0.8 + uy * r * 0.14);
-    }
-  }
-  c.lineWidth = Math.max(1.6, r * 0.1);
-  c.lineCap = 'round';
-  c.strokeStyle = c.fillStyle;
-  c.stroke();
-  c.restore();
-}
-
-function motif(
-  c: CanvasRenderingContext2D,
-  decor: DecorId,
-  x: number,
-  y: number,
-  r: number,
-  rot: number,
+function paintMedallion(
+  ctx: CanvasRenderingContext2D,
+  size: number,
+  layers: readonly EngravedLayer[],
+  p: WoodPalette,
+  bare: HTMLCanvasElement,
 ) {
-  if (decor === 'etoiles') starPath(c, x, y, r, rot);
-  else if (decor === 'sapins') firPath(c, x, y, r);
-  else flakePath(c, x, y, r, rot);
+  const d = depthOf(size);
+  for (const layer of layers) {
+    if (layer.tone === 'burn') {
+      engrave(ctx, p, d, (c) => {
+        ringsPath(c, size, layer.rings);
+        c.fill('evenodd');
+      });
+      continue;
+    }
+    ctx.save();
+    ctx.translate(0, d);
+    ctx.fillStyle = p.burn;
+    ctx.globalAlpha = 0.5;
+    ringsPath(ctx, size, layer.rings);
+    ctx.fill('evenodd');
+    ctx.restore();
+
+    ctx.save();
+    ringsPath(ctx, size, layer.rings);
+    ctx.clip('evenodd');
+    ctx.drawImage(bare, 0, 0);
+    ctx.restore();
+  }
 }
 
 /* ------------------------------------------------------------------ *
  * Filet gravé, posé entre les ajours et le bord : il ne croise jamais la
- * découpe (les ajours s'arrêtent à LAYOUT.FIELD, le corps va jusqu'à 1).
+ * découpe. Sur l'avant, la fenêtre s'arrête à 0,86 ; sur l'arrière, les toits
+ * culminent à 0,87. Le filet vit au-delà, et le corps va jusqu'à 1.
  * ------------------------------------------------------------------ */
 function drawFillet(ctx: CanvasRenderingContext2D, size: number, p: WoodPalette) {
   const cx = px(0, size);
@@ -273,8 +290,8 @@ function drawFillet(ctx: CanvasRenderingContext2D, size: number, p: WoodPalette)
       c.arc(cx, cy, pu(r - w / 2, size), 0, Math.PI * 2, true);
       c.fill('evenodd');
     });
-  ring(0.93, 0.012);
-  ring(0.905, 0.006);
+  ring(0.945, 0.012);
+  ring(0.922, 0.006);
 }
 
 /* ------------------------------------------------------------------ *
@@ -317,8 +334,8 @@ function drawLogo(
     return;
   }
 
-  // Marque placeholder neutre. Jamais le logo d'une entreprise réelle :
-  // ce serait une fausse référence commerciale.
+  // Marque placeholder neutre. Jamais le logo d'une entreprise réelle autre
+  // que celle du site : ce serait une fausse référence commerciale.
   engrave(ctx, p, d, (c) => {
     c.beginPath();
     c.arc(cx, cy, box * 0.46, 0, Math.PI * 2);
@@ -410,7 +427,6 @@ function drawPlaceholderMark(
  * ══════════════════════════════════════════════════════════════════ */
 
 export interface FaceSpec {
-  decor: DecorId;
   /** Image déjà chargée, ou `null` → marque placeholder neutre. */
   logo: HTMLImageElement | null;
   companyName: string;
@@ -421,72 +437,72 @@ export interface FaceSpec {
 }
 
 /**
- * La plaque ajourée. Bois nu, deux filets : son décor est de la matière
- * retirée, pas un dessin. Les deux faces reçoivent la même texture — c'est
- * une planche, ses deux côtés se ressemblent.
+ * La plaque avant. Le médaillon y est gravé au trait ; le ciel et le lettrage
+ * n'y sont pas dessinés, ils sont absents du bois.
+ *
+ * Les deux faces de la plaque reçoivent cette même texture. Son verso ne se
+ * voit jamais — l'avant ne pivote que d'un tiers de radian, et la caméra ne
+ * bouge pas —, donc la gravure en miroir qui s'y trouve est sans conséquence.
  */
-export function composeCutFace(spec: Pick<FaceSpec, 'palette' | 'size'>): HTMLCanvasElement {
+export function composeFrontFace(
+  spec: Pick<FaceSpec, 'palette' | 'size'> & { engraving: readonly EngravedLayer[] },
+): HTMLCanvasElement {
   const { size, palette: p } = spec;
-  const [canvas, ctx] = canvasOf(size);
 
-  drawWood(ctx, size, p, 71104);
+  // La planche nue est peinte à part : les couches `wood` du médaillon y
+  // rechargent le bois exact — veines, nœuds, vignettage — là où elles doivent
+  // rester en relief.
+  const [bare, bctx] = canvasOf(size);
+  drawWood(bctx, size, p, 71104);
+
+  const [canvas, ctx] = canvasOf(size);
+  ctx.drawImage(bare, 0, 0);
   drawFillet(ctx, size, p);
-  // Sous le bandeau plein du bas : jamais dans une découpe.
-  drawPlaceholderMark(ctx, size, -0.85);
+  paintMedallion(ctx, size, spec.engraving, p, bare);
 
   return canvas;
 }
 
 /**
- * Le fond, côté caméra. C'est ce bois-là qu'on aperçoit par les ajours, donc
- * il est plus sombre : sans ce contraste la découpe se lit comme un dessin
- * posé à plat au lieu d'un vide. Le logo est placé dans l'ouverture centrale,
- * exactement là où la plaque avant est percée.
+ * La face avant de la plaque arrière. C'est ce bois-là qu'on aperçoit par la
+ * fenêtre du ciel, donc il est plus sombre : sans ce contraste la découpe se
+ * lit comme un dessin posé à plat au lieu d'un vide.
+ *
+ * Aucun décor n'y est peint — sapins, toits et fenêtres sont découpés. Reste
+ * une montée de lumière au ras de la ligne d'horizon, qui donne au village un
+ * fond de ciel bas plutôt qu'une planche uniforme.
  */
-export function composeFondRecto(spec: FaceSpec): HTMLCanvasElement {
-  const { size, decor } = spec;
+export function composeBackFront(
+  spec: Pick<FaceSpec, 'palette' | 'size'>,
+): HTMLCanvasElement {
+  const { size } = spec;
   const p = deepen(spec.palette);
   const [canvas, ctx] = canvasOf(size);
 
   drawWood(ctx, size, p, 20251);
 
-  // Halo derrière l'ouverture : la lumière que laisserait passer un objet posé
-  // devant une fenêtre. Pas un effet lumineux — un éclaircissement du bois.
-  const { ARC_Y, BOTTOM } = LAYOUT.ARCH;
-  const hy = (ARC_Y + LAYOUT.ARCH.HALF_W + BOTTOM) / 2;
-  const halo = ctx.createRadialGradient(
-    px(0, size), py(hy, size), 0,
-    px(0, size), py(hy, size), pu(0.72, size),
+  const glow = ctx.createRadialGradient(
+    px(0, size), py(0.06, size), 0,
+    px(0, size), py(0.06, size), pu(0.9, size),
   );
-  halo.addColorStop(0, 'rgba(255, 238, 208, 0.55)');
-  halo.addColorStop(1, 'rgba(255, 238, 208, 0)');
-  ctx.fillStyle = halo;
+  glow.addColorStop(0, 'rgba(255, 238, 208, 0.4)');
+  glow.addColorStop(1, 'rgba(255, 238, 208, 0)');
+  ctx.fillStyle = glow;
   ctx.fillRect(0, 0, size, size);
 
-  // Motifs gravés dans la zone que découvre le ciel découpé. Ils passent
-  // derrière les cimes : c'est ce recouvrement qui donne la profondeur.
-  const rnd = mulberry32(48812);
-  for (const [wx, wy] of [
-    [-0.55, 0.44], [0.55, 0.44], [-0.26, 0.62], [0.26, 0.62],
-    [-0.72, 0.26], [0.72, 0.26], [0, 0.4],
-  ] as [number, number][]) {
-    engrave(ctx, p, depthOf(size) * 0.9, (c) =>
-      motif(c, decor, px(wx, size), py(wy, size), pu(0.075, size), rnd() * Math.PI * 2),
-    );
-  }
-
-  drawLogo(ctx, size, spec.logo, p, 0, -0.24, 0.5);
-  engraveText(ctx, size, spec.companyName, p, -0.58, 0.8, 0.12);
+  drawFillet(ctx, size, p);
 
   return canvas;
 }
 
 /**
- * Le dos du fond. Invisible tant que la boule est montée : c'est le
- * retournement qui le découvre, et c'est donc lui qui doit payer le
- * défilement. Mention d'origine, filet, nom, marque.
+ * Le dos de la plaque arrière. Invisible tant que la boule est montée : c'est
+ * le retournement qui le découvre, et c'est donc lui qui doit payer le
+ * défilement. Logo, filet, mention d'origine, nom.
+ *
+ * Tout tient sous BACK.SOLID_TOP, la seule bande où cette plaque est pleine.
  */
-export function composeFondVerso(spec: FaceSpec): HTMLCanvasElement {
+export function composeBackBack(spec: FaceSpec): HTMLCanvasElement {
   const { size } = spec;
   const p = backside(spec.palette);
   const [canvas, ctx] = canvasOf(size);
@@ -494,17 +510,20 @@ export function composeFondVerso(spec: FaceSpec): HTMLCanvasElement {
   drawWood(ctx, size, p, 33907);
   drawFillet(ctx, size, p);
 
-  engraveText(ctx, size, spec.backEngraving, p, 0.38, 1.5, 0.13);
+  drawLogo(ctx, size, spec.logo, p, 0, BACK.LOGO_Y, BACK.LOGO_BOX);
 
   engrave(ctx, p, depthOf(size) * 0.8, (c) => {
     c.beginPath();
-    c.rect(px(-0.34, size), py(0.19, size), pu(0.68, size), Math.max(2, pu(0.016, size)));
+    c.rect(px(-0.3, size), py(BACK.RULE_Y, size), pu(0.6, size), Math.max(2, pu(0.014, size)));
     c.fill();
   });
 
-  engraveText(ctx, size, spec.companyName, p, 0.0, 1.4, 0.17);
-  drawLogo(ctx, size, spec.logo, p, 0, -0.42, 0.42);
-  drawPlaceholderMark(ctx, size, -0.82);
+  engraveText(ctx, size, spec.backEngraving, p, BACK.ORIGIN_Y, BACK.ORIGIN_W, BACK.ORIGIN_EM);
+  engraveText(ctx, size, spec.companyName, p, BACK.NAME_Y, BACK.NAME_W, BACK.NAME_EM);
+
+  // Le logo et le nom ci-dessus sont les DEUX seuls placeholders qui restent
+  // dans la scène : la marque le dit, et elle ne dit qu'eux.
+  drawPlaceholderMark(ctx, size, BACK.MARK_Y);
 
   return canvas;
 }
