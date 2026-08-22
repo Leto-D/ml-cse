@@ -45,7 +45,7 @@ const baubleAttrs = client.bauble ? { 'data-bauble': '' } : {};
             data-hero-accent>{hero.titleAccent}</span
           >
         </h1>
-        <p class="hero-subtitle">{hero.subtitle}</p>
+        {hero.subtitle && <p class="hero-subtitle">{hero.subtitle}</p>}
         <div class="hero-actions">
           <a href="#produits" class="pill-btn">
             {hero.cta}

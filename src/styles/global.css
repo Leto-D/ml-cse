@@ -480,6 +480,16 @@ section {
   line-height: 1.7;
 }
 
+/*
+  Sans sous-titre (clé `subtitle` omise par le client), le titre tombe
+  directement sur le bouton : les 24px de marge du h1 ne suffisent pas. Le
+  sélecteur ne mord que dans ce cas — quand le paragraphe est là, c'est lui
+  qui porte l'écart.
+*/
+.hero h1 + .hero-actions {
+  margin-top: var(--sp-7);
+}
+
 /* Deux appels à l'action côte à côte, repliés l'un sous l'autre au besoin. */
 .hero-actions {
   display: flex;

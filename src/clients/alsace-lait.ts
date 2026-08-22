@@ -44,8 +44,10 @@ export const alsaceLait: Client = {
     titleLead: 'Des cadeaux aux couleurs',
     titleJoin: 'de ',
     titleAccent: 'votre entreprise',
-    subtitle:
-      "Une collection d'objets personnalisables (médaillons, boules et supports de téléphone) pensée pour marquer la fin d'année avec élégance et authenticité régionale.",
+    // Pas de `subtitle` : le hero est aussi la scène du coffret et de la boule.
+    // Un paragraphe de plus repoussait l'objet hors de l'écran sur les petits
+    // mobiles. L'énumération de la gamme est de toute façon reprise, en plus
+    // complet, par les fiches produits.
     cta: 'Découvrir les cadeaux',
   },
 

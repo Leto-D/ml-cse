@@ -116,7 +116,13 @@ export interface Client {
     titleJoin: string;
     /** Nom mis en italique et en accent. */
     titleAccent: string;
-    subtitle: string;
+    /**
+     * Paragraphe sous le titre. Omis = absent, et c'est le cas d'Alsace Lait :
+     * le hero porte la scène du coffret et de la boule, un bloc de texte de
+     * plus repousse l'objet hors de l'écran sur les petits mobiles et vole la
+     * vedette à l'animation. L'argumentaire vit alors dans `products.intro`.
+     */
+    subtitle?: string;
     cta: string;
     /**
      * Second appel à l'action, discret, à côté du principal. Omis = absent.
