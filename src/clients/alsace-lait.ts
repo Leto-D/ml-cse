@@ -47,23 +47,17 @@ export const alsaceLait: Client = {
     subtitle:
       "Une collection d'objets personnalisables (médaillons, boules et supports de téléphone) pensée pour marquer la fin d'année avec élégance et authenticité régionale.",
     cta: 'Découvrir les cadeaux',
-    ctaSecondary: {
-      label: 'Votre logo',
-      href: 'lab/logo',
-    },
   },
 
   /**
-   * Gamme boules de Noël en bois usinées CNC. Ligne distincte des médailles
-   * en PEHD recyclé : le discours ne doit pas mélanger les deux.
+   * Gamme boules de Noël en bois usinées CNC, révélée dans le hero : le
+   * coffret s'efface, la boule prend sa place. Ligne distincte des médailles
+   * en PEHD recyclé : le discours ne doit pas mélanger les deux — l'argument
+   * de gamme vit dans `products.intro`.
    * `logoUrl` omis → marque placeholder neutre dessinée au canevas. Ne jamais
    * y poser le logo d'une entreprise qui n'est pas cliente.
    */
   bauble: {
-    eyebrow: 'Nouveauté · Gamme bois',
-    title: 'La boule se sépare, votre marque apparaît',
-    subtitle:
-      "Deux plaques de hêtre ajourées à la commande numérique, montées l'une sur l'autre : le décor est de la matière retirée, et la forêt du fond se découvre par la fenêtre de l'avant. Séparez-les, le dos gravé porte votre marque.",
     artwork: 'alsace-lait',
     companyName: 'Votre entreprise',
     backEngraving: 'Fabriqué en Alsace',
@@ -73,7 +67,7 @@ export const alsaceLait: Client = {
     eyebrow: 'Nos idées cadeaux',
     title: 'Des objets qui font sens',
     intro:
-      'Chaque pièce est pensée pour durer, gravée à votre image et fabriquée en matériaux nobles ou recyclés, en lien direct avec le territoire alsacien.',
+      'Chaque pièce est pensée pour durer, gravée à votre image et fabriquée en matériaux nobles ou recyclés, en lien direct avec le territoire alsacien. La boule de Noël assemble deux plaques de hêtre ajourées à la commande numérique : le décor est de la matière retirée, et son dos porte votre marque gravée.',
     items: [
       {
         slug: 'medaillon-diorama',
@@ -134,39 +128,6 @@ export const alsaceLait: Client = {
         image: coeurAlsacien,
         alt: 'Cœur de Noël en bois clair avec silhouette de bouteille de lait découpée et texte Frohe Weihnachten gravé, suspendu à une branche de sapin enneigée',
         tag: 'Personnalisable',
-      },
-    ],
-  },
-
-  gallery: {
-    eyebrow: 'Galerie',
-    title: 'La collection en images',
-    intro:
-      'Un aperçu des pièces gravées et de leur mise en scène. Chaque objet est unique, gravé à votre image.',
-    photos: [
-      {
-        image: medaillonDiorama,
-        alt: 'Médaillon de Noël suspendu dans un sapin, scène de renards en bois découpé',
-      },
-      {
-        image: etoilesForestieres,
-        alt: 'Quatre étoiles de Noël en bois clair avec scènes forestières',
-      },
-      {
-        image: supportTelephone,
-        alt: 'Support de téléphone en bois avec gravure ALSACE LAIT',
-      },
-      {
-        image: medaillonBouteille,
-        alt: 'Médaillon rond en bois avec sapin et bouteille de lait gravés',
-      },
-      {
-        image: collectionMedaillons,
-        alt: 'Collection de médaillons de Noël en bois sur planche',
-      },
-      {
-        image: coeurAlsacien,
-        alt: 'Cœur de Noël en bois suspendu à un sapin enneigé',
       },
     ],
   },

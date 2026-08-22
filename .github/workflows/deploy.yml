@@ -39,14 +39,6 @@ jobs:
 
       - name: Construire le site
         run: npm run build
-        env:
-          # Identifiant du service de logos, utilisé par la page « Votre logo ».
-          # Il finit de toute façon dans le HTML servi : c'est une variable de
-          # dépôt, pas un secret. Absente, le site se construit quand même et
-          # la page invite à saisir un identifiant dans ses réglages avancés.
-          # À définir une fois :
-          #   gh variable set PUBLIC_CLIENTBRANDFETCH --repo Leto-D/ml-cse --body "…"
-          PUBLIC_CLIENTBRANDFETCH: ${{ vars.PUBLIC_CLIENTBRANDFETCH }}
 
       - name: Préparer l'artefact Pages
         uses: actions/upload-pages-artifact@v3

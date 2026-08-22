@@ -39,11 +39,6 @@ export interface Product {
   tag?: string;
 }
 
-export interface GalleryPhoto {
-  image: ImageMetadata;
-  alt: string;
-}
-
 export interface Value {
   /** Clé d'icône résolue dans components/Icon.astro. */
   icon: 'origin' | 'engrave' | 'clock' | 'gift';
@@ -60,9 +55,10 @@ export interface Value {
 export type ArtworkId = 'alsace-lait';
 
 /**
- * Boule de Noël en bois usinée CNC : section à effet 3D pilotée par le
- * défilement. Gamme distincte des médailles en PEHD recyclé — ne pas mélanger
- * les deux discours dans les textes.
+ * Boule de Noël en bois usinée CNC, révélée dans le hero : le coffret
+ * s'efface, la boule prend sa place, puis se désassemble au défilement.
+ * Gamme distincte des médailles en PEHD recyclé — ne pas mélanger les deux
+ * discours dans les textes.
  *
  * L'objet est fait de DEUX plaques ajourées, montées face contre face. Le ciel
  * est retiré des deux, mais pas autour du même dessin : devant le médaillon de
@@ -71,15 +67,14 @@ export type ArtworkId = 'alsace-lait';
  * défilement les sépare, puis retourne celle de derrière pour découvrir son dos
  * gravé.
  *
- * Clé optionnelle : une landing qui ne la déclare pas n'affiche pas la section,
- * et les configs existantes restent valides.
+ * La section n'a plus de texte propre : le discours vit dans le hero (h1 et
+ * sous-titre) et l'argumentaire de gamme dans `products.intro`.
+ *
+ * Clé optionnelle : une landing qui ne la déclare pas n'affiche qu'un hero
+ * classique (coffret, pas d'épinglage), et les configs existantes restent
+ * valides.
  */
 export interface Bauble {
-  /** Textes commerciaux. Ils vivent en HTML hors du canevas : le canevas est
-      décoratif et `aria-hidden`, il ne doit porter aucune information. */
-  eyebrow: string;
-  title: string;
-  subtitle: string;
   /** Tracés de l'objet. */
   artwork: ArtworkId;
   /**
@@ -142,13 +137,6 @@ export interface Client {
     title: string;
     intro: string;
     items: Product[];
-  };
-
-  gallery: {
-    eyebrow: string;
-    title: string;
-    intro: string;
-    photos: GalleryPhoto[];
   };
 
   values: Value[];

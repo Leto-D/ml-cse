@@ -3,6 +3,7 @@ import type { Client } from '~/types';
 import Icon from './Icon.astro';
 import Ornament from './Ornament.astro';
 import GiftBox from './GiftBox.astro';
+import BaubleObject from './BaubleObject.astro';
 
 interface Props {
   client: Client;
@@ -17,37 +18,55 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const secondaryHref = hero.ctaSecondary
   ? `${base}/${hero.ctaSecondary.href.replace(/^\//, '')}`
   : undefined;
+
+/*
+  L'ouverture de la page est une seule section. Le coffret y joue le rôle du
+  cadeau : fermé au repos, il s'ouvre au premier défilement, s'efface, et la
+  boule prend sa place — le désassemblage enchaîne sans rupture. Les seuils
+  et les classes vivent dans scripts/gift-box.ts ; la hauteur défilable et
+  l'étage épinglé dans global.css (bloc HERO).
+
+  `data-bauble` n'est posé que si le client déclare une boule : c'est lui qui
+  fait de la section un étage de 250vh et qui sert de contrat au script de
+  garde (scripts/bauble.ts). Un client sans boule garde un hero classique.
+*/
+const baubleAttrs = client.bauble ? { 'data-bauble': '' } : {};
 ---
 
-<section class="hero" aria-labelledby="hero-title">
-  <div class="container hero-grid">
-    <div class="hero-content">
-      <span class="hero-eyebrow">{hero.eyebrow}</span>
-      <h1 id="hero-title">
-        <span data-hero-lead>{hero.titleLead}</span><br />
-        <span data-hero-join>{hero.titleJoin}</span><span
-          class="accent"
-          data-hero-accent>{hero.titleAccent}</span
-        >
-      </h1>
-      <p class="hero-subtitle">{hero.subtitle}</p>
-      <div class="hero-actions">
-        <a href="#produits" class="pill-btn">
-          {hero.cta}
-          <Icon name="arrow-down" />
-        </a>
-        {
-          hero.ctaSecondary && (
-            <a href={secondaryHref} class="pill-btn is-ghost">
-              {hero.ctaSecondary.label}
-              <Icon name="engrave" />
-            </a>
-          )
-        }
+<section class="hero" aria-labelledby="hero-title" {...baubleAttrs}>
+  <div class="hero-stage">
+    <div class="container hero-grid">
+      <div class="hero-content">
+        <span class="hero-eyebrow">{hero.eyebrow}</span>
+        <h1 id="hero-title">
+          <span data-hero-lead>{hero.titleLead}</span><br />
+          <span data-hero-join>{hero.titleJoin}</span><span
+            class="accent"
+            data-hero-accent>{hero.titleAccent}</span
+          >
+        </h1>
+        <p class="hero-subtitle">{hero.subtitle}</p>
+        <div class="hero-actions">
+          <a href="#produits" class="pill-btn">
+            {hero.cta}
+            <Icon name="arrow-down" />
+          </a>
+          {
+            hero.ctaSecondary && (
+              <a href={secondaryHref} class="pill-btn is-ghost">
+                {hero.ctaSecondary.label}
+                <Icon name="engrave" />
+              </a>
+            )
+          }
+        </div>
+      </div>
+
+      <div class="hero-media">
+        <GiftBox />
+        <BaubleObject client={client} />
       </div>
     </div>
-
-    <GiftBox />
   </div>
   <Ornament class="hero-deco" />
 </section>

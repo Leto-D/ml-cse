@@ -1,19 +1,40 @@
 /**
- * Coffret du hero : ouverture au défilement et pluie de confettis.
+ * Coffret du hero : ouverture au défilement, gerbe de confettis, puis
+ * passation à la boule.
  *
- * Déclenché une fois quand le hero est suffisamment sorti de l'écran. Les
- * confettis vivent dans un calque `position: fixed` retiré du DOM à la fin, et
- * ne captent jamais les clics. Revenir tout en haut réarme l'animation.
+ * Le hero fusionné fait 250vh et épingle son contenu : la progression y est
+ * mesurée sur le rectangle de la section, comme dans l'îlot 3D — même
+ * formule, pour que les seuils tombent au même endroit. L'écouteur pose deux
+ * classes : `is-open` sur le coffret (le couvercle se soulève, puis les
+ * confettis), puis `is-swapped` sur la section (le coffret s'efface pendant
+ * que la boule apparaît — le fondu croisé vit dans global.css). Aucun état
+ * caché n'est posé ailleurs que depuis ici : sans JavaScript, tout reste
+ * visible. Revenir tout en haut réarme les deux.
+ *
+ * Les confettis vivent dans un calque `position: fixed` retiré du DOM à la
+ * fin, et ne captent jamais les clics.
  */
 
 const CONFETTI_COUNT = 44;
 const FALL_MS = 2600;
 
 /**
- * Seuil de déclenchement : proportion du hero déjà défilée. Volontairement bas,
- * pour que le coffret soit encore bien dans l'écran au moment de la gerbe.
+ * Seuil d'ouverture : proportion de la section déjà défilée. Volontairement
+ * bas, pour que le coffret soit encore bien dans l'écran au moment de la
+ * gerbe.
  */
-const TRIGGER_RATIO = 0.16;
+const OPEN_RATIO = 0.05;
+
+/**
+ * Seuil de passation coffret → boule : la transition CSS se joue pendant que
+ * le défilement parcourt 0,12 → 0,22, et le désassemblage 3D ne démarre
+ * qu'à 0,22 (SEQUENCE_START dans BaubleCanvas.tsx) — la boule est posée
+ * juste avant que ses plaques ne bougent.
+ */
+const SWAP_RATIO = 0.12;
+
+/** Hero court (client sans boule, pas d'épinglage) : seuil historique. */
+const SHORT_RATIO = 0.16;
 
 function colors(): string[] {
   const style = getComputedStyle(document.documentElement);
@@ -88,6 +109,15 @@ function burst(origin: DOMRect) {
   window.setTimeout(() => layer.remove(), FALL_MS + 1400);
 }
 
+/** Progression de la section épinglée : 0 en haut, 1 quand elle quitte l'écran. */
+function sectionProgress(section: HTMLElement): number {
+  const rect = section.getBoundingClientRect();
+  const travel = rect.height - window.innerHeight;
+  if (travel <= 0) return 0;
+  const p = -rect.top / travel;
+  return p < 0 ? 0 : p > 1 ? 1 : p;
+}
+
 export function initGiftBox(): void {
   const gift = document.querySelector<HTMLElement>('[data-gift]');
   const hero = document.querySelector<HTMLElement>('.hero');
@@ -100,23 +130,36 @@ export function initGiftBox(): void {
     return;
   }
 
+  // Sans boule déclarée, le hero garde sa hauteur naturelle : la progression
+  // se mesure alors au scrollY, comme avant la fusion.
+  const pinned = hero.hasAttribute('data-bauble');
+
   let opened = false;
+  let swapped = false;
 
   const onScroll = () => {
-    const progress = window.scrollY / Math.max(hero.offsetHeight, 1);
+    const progress = pinned
+      ? sectionProgress(hero)
+      : window.scrollY / Math.max(hero.offsetHeight, 1);
 
-    if (!opened && progress > TRIGGER_RATIO) {
+    if (!opened && progress > (pinned ? OPEN_RATIO : SHORT_RATIO)) {
       opened = true;
       gift.classList.add('is-open');
       // Laisse le couvercle se soulever avant de libérer les confettis.
       window.setTimeout(() => burst(gift.getBoundingClientRect()), 260);
-      return;
     }
 
-    // Retour tout en haut : le coffret se referme et pourra rejouer.
+    if (pinned && !swapped && progress >= SWAP_RATIO) {
+      swapped = true;
+      hero.classList.add('is-swapped');
+    }
+
+    // Retour tout en haut : le coffret se referme et la scène peut rejouer.
     if (opened && window.scrollY < 40) {
       opened = false;
+      swapped = false;
       gift.classList.remove('is-open');
+      hero.classList.remove('is-swapped');
     }
   };
 

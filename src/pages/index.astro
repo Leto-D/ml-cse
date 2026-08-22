@@ -3,9 +3,7 @@ import { activeClient } from '~/clients';
 import BaseLayout from '~/layouts/BaseLayout.astro';
 import SiteHeader from '~/components/SiteHeader.astro';
 import Hero from '~/components/Hero.astro';
-import BaubleReveal from '~/components/BaubleReveal.astro';
 import Products from '~/components/Products.astro';
-import Gallery from '~/components/Gallery.astro';
 import Values from '~/components/Values.astro';
 import Contact from '~/components/Contact.astro';
 import SiteFooter from '~/components/SiteFooter.astro';
@@ -18,9 +16,7 @@ const client = activeClient;
 
   <main id="main">
     <Hero client={client} />
-    <BaubleReveal client={client} />
     <Products client={client} />
-    <Gallery client={client} />
     <Values client={client} />
     <Contact client={client} />
   </main>

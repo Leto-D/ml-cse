@@ -28,10 +28,10 @@ d'origine (bleu nuit, rouge, or) a été conservée et raffinée, pas remplacée
 ### Le contrat de données
 
 `src/types.ts` définit l'interface `Client`. C'est le seul endroit qui décrit
-ce dont une landing a besoin : `palette`, `meta`, `header`, `hero`,
-`products`, `gallery`, `values`, `contact`, `form`, `footer`,
-`personalization`. Un nouveau client doit satisfaire cette interface, sinon
-le build TypeScript échoue. C'est volontaire : le contrat est la
+ce dont une landing a besoin : `palette`, `meta`, `header`, `hero`
+(`bauble` en clé optionnelle), `products`, `values`, `contact`, `form`,
+`footer`, `personalization`. Un nouveau client doit satisfaire cette interface,
+sinon le build TypeScript échoue. C'est volontaire : le contrat est la
 documentation.
 
 ### La sélection du client
@@ -69,25 +69,38 @@ Importées statiquement dans la config du client, donc traitées par
 multiples, dimensions posées dans le HTML. Une image référencée par une chaîne
 de caractères échapperait à tout ça — à éviter.
 
+### L'ouverture fusionnée
+
+Le hero et l'ancienne section boule n'en font qu'une : une section de 250vh
+(200vh sous 960px) portant `data-bauble`, dont le contenu vit dans un étage
+`sticky` de `100svh`. Le coffret s'ouvre à 5 % de défilement, s'efface à 12 %
+pendant que la boule apparaît (fondu croisé en CSS, classes posées par
+`gift-box.ts`), et le désassemblage 3D ne démarre qu'à 22 %
+(`SEQUENCE_START` dans `BaubleCanvas.tsx`). Un client sans clé `bauble` garde
+un hero classique, non épinglé.
+
+Ce qui a quitté la page (galerie, page « Votre logo ») est archivé à la
+racine dans `archive/`, avec un README qui dit comment le remettre.
+
 ---
 
 ## 3. Le JavaScript
 
 Chaque module de `src/scripts/` est importé par un `<script>` du composant qui
 le concerne ; Astro les regroupe en îlots et ne charge rien d'autre. La page
-d'accueil en sert environ **7 Ko** ; `logo-preview.ts` n'est chargé que par la
-page « Votre logo ».
+d'accueil en sert quelques **kilo-octets** ; le morceau lourd de la scène 3D
+(React + three, ~1,1 Mo) n'est tiré que si le mouvement est autorisé, que WebGL
+répond et que le hero approche.
 
 | Module | Rôle |
 |---|---|
 | `multiselect.ts` | Liste déroulante à choix multiples posée sur de vraies cases à cocher |
 | `quote-form.ts` | Compteur de quantité, présélection produit, mode démonstration, envoi |
 | `letter-animation.ts` | Enveloppe de Noël qui s'envole au clic sur « Envoyer » (~1,45 s, WAAPI) |
-| `lightbox.ts` | Visionneuse de la galerie |
 | `reveal.ts` | Apparition des sections au défilement (`IntersectionObserver`) |
 | `personalize.ts` | Réécritures liées au paramètre `?nom=` |
-| `gift-box.ts` | Coffret du hero : couvercle qui se soulève + 44 confettis |
-| `logo-preview.ts` | Page « Votre logo » : recherche Brandfetch, placement, rendus |
+| `gift-box.ts` | L'ouverture du hero : couvercle du coffret + 44 confettis, puis passation à la boule |
+| `bauble.ts` | Garde d'entrée de la scène 3D : ne tire le morceau lourd que si le mouvement est autorisé, WebGL répond et le hero approche |
 
 ### Point important sur `multiselect.ts`
 
@@ -99,10 +112,13 @@ Home/End naviguent, Escape ferme et rend le focus au bouton.
 
 ### Point important sur `gift-box.ts`
 
-Déclenché au défilement quand le hero est sorti à `TRIGGER_RATIO = 0.16`. Le
-seuil est bas exprès : plus haut, le coffret est déjà trop près du bord
-supérieur et la gerbe part hors écran. Pour la même raison, la hauteur du jet
-est bornée :
+Le hero fusionné (coffret puis boule, une seule section de 250vh épinglée)
+déroule son scénario sur la progression de la section : le couvercle s'ouvre à
+`OPEN_RATIO = 0,05`, et la passation — le coffret s'efface pendant que la boule
+apparaît, tout en transitions CSS — se déclenche à `SWAP_RATIO = 0,12`. La
+hauteur défilable étant 1,5 écran, un seuil d'ouverture plus haut laisserait le
+coffret trop près du bord supérieur et la gerbe partirait hors écran. Pour la
+même raison, la hauteur du jet est bornée :
 
 ```ts
 const maxRise = Math.max(60, startY - 70);
@@ -110,8 +126,10 @@ const peakY = Math.max(Math.sin(angle) * power, -maxRise);
 ```
 
 Les confettis vivent dans un calque `position: fixed`, `pointer-events: none`,
-supprimé du DOM à la fin. Revenir tout en haut réarme l'animation.
-`prefers-reduced-motion` présente le coffret ouvert, immobile, sans confettis.
+supprimé du DOM à la fin. Revenir tout en haut réarme l'ouverture ET la
+passation. `prefers-reduced-motion` présente le coffret ouvert, immobile, sans
+confettis, les figures SVG de la boule empilées dessous — et la scène 3D n'est
+jamais chargée.
 
 **Ne pas réintroduire** : plusieurs versions plus ambitieuses ont été
 construites puis abandonnées sur décision du client — recomposition des
@@ -122,99 +140,7 @@ attendu aujourd'hui est simple : les confettis apparaissent et disparaissent.
 
 ---
 
-## 4. La page « Votre logo sur l'objet »
-
-`src/pages/lab/logo.astro` + `src/scripts/logo-preview.ts`. Accessible depuis
-le second bouton du hero, sous `/lab/logo`.
-
-Le visiteur cherche son entreprise, le logo est récupéré chez **Brandfetch**,
-puis affiché dans une zone déplaçable sur une photo produit. Trois réglages :
-version du logo (logo / symbole / icône), déclinaison (claire / sombre),
-technique de marquage (encré / gravé / gaufré).
-
-Mécanismes à connaître :
-
-- **Aucun `fetch` pour l'aperçu.** L'URL du CDN est posée dans un `<img>` ; le
-  segment `fallback/404` force un vrai 404, capté par `onerror`. Pas de
-  dépendance CORS, et surtout pas de succès simulé.
-- **La technique de marquage est purement CSS**, donc gratuite en réseau.
-  Changer de technique ne déclenche aucune requête ; changer de version ou de
-  déclinaison relance l'aperçu automatiquement, dès lors qu'un logo est déjà
-  affiché.
-- **Le relief vient de copies décalées.** Le script pose l'URL du logo dans
-  `--logo-url` sur `.logo-mark` ; deux pseudo-éléments reprennent cette image,
-  décalée d'un ou deux pixels, **sous** le logo. Seule la frange qui dépasse
-  reste visible : lèvre claire pour la gravure, ombre portée pour le gaufrage.
-- **Rien ne doit isoler le marquage de la photo.** Un `mix-blend-mode` ne
-  fusionne qu'avec ce qui est peint dans son contexte d'empilement. La zone
-  était centrée par `transform: translate(-50%, -50%)`, ce qui en créait un :
-  toutes les fusions étaient inertes, et le marquage se posait comme un
-  autocollant. La zone est donc positionnée **par son coin haut-gauche**, le
-  script convertissant le centre logique en coin à chaque pose (d'où la
-  fonction `refresh` et l'écoute du `resize`). Ne jamais réintroduire de
-  `transform`, `filter`, `opacity < 1` ou `isolation: isolate` sur
-  `.logo-zone` ou `.logo-mark` : chacun rétablirait le bug.
-- **Le fond plein est détouré au canevas.** `knockoutBackground()` échantillonne
-  le pourtour ; s'il est opaque et uniforme, un remplissage par diffusion depuis
-  les bords rend cette couleur transparente, avec une frange adoucie. Jamais un
-  remplacement global : un aplat de la même couleur à l'intérieur du tracé doit
-  survivre. La fonction renvoie `null` (et on affiche l'image brute) si le fond
-  n'est pas uniforme, si le canevas est contaminé faute d'en-têtes CORS, ou si
-  plus de 97 % de l'image disparaît. Le logo est chargé une première fois avec
-  `crossOrigin`, et réessayé sans en cas d'échec : un refus CORS ne prouve pas
-  que le logo n'existe pas.
-- **Deux réglages ont un piège de vocabulaire.** La version « logo » est le
-  défaut parce que Brandfetch la livre en fond transparent ; `icon` est une
-  vignette carrée à fond plein. Et le paramètre `theme` désigne la couleur du
-  **tracé**, pas celle du support : `dark` (tracé foncé) est le défaut, puisque
-  les objets sont clairs. `light` renvoie souvent un tracé blanc, qui disparaît
-  entièrement sous un `multiply`.
-- **Repli automatique de version.** Toutes les marques n'ont pas les trois
-  versions. Si celle demandée renvoie 404, le script parcourt les autres dans
-  l'ordre `logo → symbole → icône`, affiche la première disponible et **bascule
-  le bouton** dessus en l'annonçant. Le visiteur n'a donc jamais à les essayer
-  une par une. Un jeton `previewToken` garantit que seul le dernier aperçu
-  demandé s'affiche, les chaînes de repli étant asynchrones.
-- **`data-cut` sur la zone** signale un logo détouré. En mode « Encré », le
-  `multiply` n'est appliqué qu'en son absence : sur un tracé clair détouré, il
-  effacerait le marquage.
-
-Pièges :
-
-- Les suggestions de recherche sont **créées en JavaScript**, donc elles ne
-  portent pas l'attribut de scope d'Astro. Toute règle qui les vise doit
-  passer par `:global()`, sinon elle ne s'applique jamais. Même chose pour le
-  `<img>` du logo. `.logo-mark`, lui, est dans le markup : il reste scopé, et
-  c'est exprès, pour que ses pseudo-éléments fonctionnent.
-- Le **client ID Brandfetch** vient de `CLIENTBRANDFETCH` (ou
-  `PUBLIC_CLIENTBRANDFETCH`) dans `.env`. Il est encodé en base64 dans
-  `data-cid` sur le formulaire, donc absent en clair du HTML et du bundle.
-  **Ce n'est pas une protection**, seulement un obstacle aux aspirateurs
-  naïfs.
-
-### Garde-fous de consommation
-
-`allow()` dans `logo-preview.ts` tient un compteur par heure glissante dans
-`localStorage` : 160 recherches, 120 aperçus. Le comptage est **par navigateur**,
-pas par adresse IP ni par compte : `localStorage` est cloisonné par origine et
-par profil. Changer de navigateur, passer en navigation privée ou vider le
-stockage remet le compteur à zéro. S'y ajoutent trois caractères minimum avant
-de chercher, 400 ms d'anti-rebond, la balise `noindex` et un `robots.txt`
-interdisant `/lab/`.
-
-Un repli de version peut déclencher jusqu'à trois requêtes image pour un seul
-aperçu, mais ne consomme qu'un jeton : c'est la même demande du visiteur.
-
-Tout cela protège du clic frénétique et de l'onglet oublié. **Aucun de ces
-garde-fous n'arrête un robot** : ils vivent dans le navigateur, et le
-`robots.txt` du dépôt n'a même pas autorité sur GitHub Pages, où le site est
-servi sous `/ml-cse` et non à la racine du domaine. La seule protection réelle
-serait un proxy détenant la clé côté serveur (fonction Netlify ou Cloudflare
-Worker), la page appelant ce proxy au lieu de Brandfetch.
-
----
-
-## 5. Le formulaire de devis
+## 4. Le formulaire de devis
 
 L'envoi est intercepté en JavaScript :
 
@@ -243,7 +169,7 @@ Netlify. Le repli sans JavaScript (`?merci=1`) est intact.
 
 ---
 
-## 6. Déploiement
+## 5. Déploiement
 
 Un push sur la branche `main` du dépôt **`ml-cse`** déclenche
 `.github/workflows/deploy.yml` : Node 22, `npm ci`, `npm run build`,
@@ -276,7 +202,7 @@ git -c user.name="Leto-D" -c user.email="dmitri.zapalov@gmail.com" commit
 
 ---
 
-## 7. Pièges déjà rencontrés
+## 6. Pièges déjà rencontrés
 
 Utile pour ne pas rediagnostiquer ce qui l'a déjà été.
 
@@ -307,7 +233,7 @@ Utile pour ne pas rediagnostiquer ce qui l'a déjà été.
 
 ---
 
-## 8. Commandes
+## 7. Commandes
 
 ```bash
 npm run dev      # serveur de développement

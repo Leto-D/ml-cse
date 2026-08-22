@@ -102,6 +102,15 @@ const GEO = {
 };
 
 const ANIM = {
+  /**
+   * Début de la séquence, en progression de section. Le hero fusionné joue
+   * d'abord le coffret : ouverture à 0,05, échange coffret → boule de 0,12 à
+   * 0,22 (scripts/gift-box.ts). Les plaques n'entrent en scène qu'ensuite :
+   * la progression mesurée sur la section est remappée pour que 0,22 devienne
+   * le zéro de la scène. Les autres bornes ci-dessous vivent dans cet espace
+   * remappé.
+   */
+  SEQUENCE_START: 0.22,
   /** Amorce : décollement dans l'épaisseur, en rayons de corps. */
   UNSTICK_GAP: 0.16,
   /** Fin de l'amorce, en progression. */
@@ -223,7 +232,10 @@ function useScrollProgress(section: HTMLElement) {
       const r = section.getBoundingClientRect();
       const travel = r.height - window.innerHeight;
       const raw = travel <= 0 ? 0 : -r.top / travel;
-      progress.current = raw < 0 ? 0 : raw > 1 ? 1 : raw;
+      // La section porte aussi l'ouverture du coffret : la séquence des
+      // plaques commence à SEQUENCE_START, pas à 0.
+      const p = (raw - ANIM.SEQUENCE_START) / (1 - ANIM.SEQUENCE_START);
+      progress.current = p < 0 ? 0 : p > 1 ? 1 : p;
     };
     compute();
     // Passif : la scène LIT la position, elle ne la contrôle pas. Aucun
