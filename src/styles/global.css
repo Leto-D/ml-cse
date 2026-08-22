@@ -1395,6 +1395,12 @@ textarea:focus-visible {
     margin-left: auto;
     margin-right: auto;
   }
+  /* Le bloc passe au centre, mais `text-align` ne traverse pas un conteneur
+     flex : sans cette ligne le bouton reste collé à gauche sous un titre
+     centré. */
+  .hero-actions {
+    justify-content: center;
+  }
   /* Le cadre partagé se resserre : l'objet doit tenir sous le texte. */
   .hero[data-bauble-live] .hero-media {
     max-height: 46svh;
