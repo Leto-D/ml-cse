@@ -15,11 +15,15 @@
  * l'instant, sans rien annuler de ce que le visiteur a fait.
  */
 
-/** Vitesse moyenne visée, en pixels par milliseconde. */
-const RATE = 0.55;
+/**
+ * Vitesse moyenne visée, en pixels par milliseconde. Ralentie de 30 % par
+ * rapport au premier réglage (0,55), la séquence passant encore trop vite pour
+ * se lire.
+ */
+const RATE = 0.42;
 /** Bornes de durée : assez long pour se lire, assez court pour ne pas peser. */
-const MIN_MS = 1400;
-const MAX_MS = 4200;
+const MIN_MS = 1800;
+const MAX_MS = 5500;
 /** Écart au-delà duquel on considère que le visiteur a repris la main. */
 const HAND_OVER_PX = 2;
 
